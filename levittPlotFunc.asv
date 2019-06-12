@@ -1,0 +1,40 @@
+function levittPlotFunc(t,plot_type,varargin)
+% levittPlotFunc(t,plot_type,varargin)
+%
+% plot a track. this is mcs, so maybe plot something like a psychometric
+% function, or override to plot a confusion matrix?
+
+tracked_vars = get(t,'params','tracked_vars');
+
+varnames = fieldnames(tracked_vars);
+
+switch plot_type
+    
+    case 'scatter'
+        ind_vars = get(t,'trialdata',varnames{1});
+        response = get(t,'trialdata',response);
+        plot(ind_vars,response,'o');
+        xlabel(varnames{1});
+        ylabel('Response');
+    case 'means'
+        
+    case 'psychometric'
+        ind_vars = get(t,'trialdata',varnames{1});
+        correct = get(t,'trialdata',correct);
+        ind_vals = 
+        plot(ind_vars,response,'o');
+        xlabel(varnames{1});
+        ylabel('Response');
+        
+    case 'confusion'
+        
+    
+for iVar = 1:length(varnames)
+    varname = varnames{iVar}; % 'freq' then 'amp'
+    varvals = params.tracked_vars.(varname); % [100 200 300] then [20 40]
+    orig_length = size(allcombos,2);
+    allcombos = repmat(allcombos,1,length(varvals)); % [] then [100 200 300 100 200 300]
+    allcombos(iVar,:) = reshape(repmat(varvals,orig_length,1),1,[]);
+    % [100 200 300] then [100 200 300 100 200 300; 20 20 20 30 30 30]
+end
+

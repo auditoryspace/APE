@@ -1,0 +1,51 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf460
+{\fonttbl\f0\froman\fcharset0 TimesNewRomanPSMT;\f1\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;}
+\deftab720
+\pard\pardeftab720\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 3. Designing experiments with APE\
+\
+So, how do you use APE to design experiments, and how is it different from writing experiments from scratch? We can contrast two approaches to experiment programming in APE, a top-down approach and a bottom-up approach. Both take advantage of APE\'92s ability to hide programming details inside objects like 
+\f1\fs22 stim
+\f0\fs24  and 
+\f1\fs22 presenter
+\f0\fs24 , customizing those objects\'92 behaviors as you go. The top-down and bottom-up approaches are not exclusive (you might adopt some aspects of both when programming an experiment), but they do represent different perspectives that are useful to compare and contrast.\
+\pard\pardeftab720\li360\ql\qnatural\pardirnatural
+\cf0 \
+\pard\pardeftab720\ql\qnatural\pardirnatural
+\cf0 3.a The top-down approach. \
+\
+The abstract nature of APE objects lends itself quite naturally to a programming practice called 
+\i abstraction
+\i0 , or 
+\i top-down programming
+\i0 . This basically means designing the large-scale aspects of your program first, filling in the details later. By keeping programmers focused on how the \'93big picture\'94 works, abstraction helps big programs to maintain consistent, logical, functionality. It also allows programmers to put off figuring out the details of particularly tricky operations until a later time, or to delegate programming tasks to others. For example, lets say want to develop an experiment that tests listeners\'92 perception of iterated rippled noise (IRN) stimuli. You could write most of the program elements for selecting and presenting stimuli, collecting responses, and scoring performance without knowing how to implement the IRN stimulus. You can assume you will define a 
+\f1\fs22 stim
+\f0\fs24  object, 
+\f1\fs22 stim_IRN
+\f0\fs24 , that will respond to the normal 
+\f1\fs22 stim
+\f0\fs24  class methods, such as 
+\f1\fs22 goMakeStim
+\f0\fs24  and 
+\f1\fs22 goPresent
+\f0\fs24 , without knowing (yet) what parameters to put in 
+\f1\fs22 stim_IRN.params
+\f0\fs24  or what function handle to put in 
+\f1\fs22 stim_IRN.makeStimFunc
+\f0\fs24 . You might even write the main program while a colleague implements 
+\f1\fs22 stim_IRN
+\f0\fs24 . Because APE objects conform to a standard set of class methods, you can be certain that your colleague\'92s 
+\f1\fs22 stim_IRN
+\f0\fs24  will work with your program (assuming that appropriate code for the TDT hardware is written to support 
+\f1\fs22 stim_IRN
+\f0\fs24 , etc.). \
+\
+3.a.1 Top-Down, Step-by-Step\
+\
+3.b The bottom-up approach\
+\
+3.b.1 Bottom-Up, Step-by-Step\
+\
+}

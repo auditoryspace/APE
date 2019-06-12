@@ -1,0 +1,74 @@
+function p = set_atten(p,atten_num,atten_val,varargin)
+% function p = set_atten(p,atten_num,atten_val)
+%
+% Set an attenuator value
+%
+% p: the presenter object
+% atten_num: which attenuator to set
+% atten_val: attenuation value
+%
+% By default, this function will set the attenuation values on PA5 devices.
+% In that case, <atten_num> refers to the order of devices added to the
+% presenter object (typically, PA5#1 is added first, etc.). 
+%
+% If <p> does not contain PA5 devices (for example, when running an RM2), 
+% then set_atten calls set_tag_val, using the tag name "atten_X" where X 
+% stands for <atten_num>. Designing RPVDS circuits to define such tags can
+% allow transparent movement of code from RP2/PA5 systems to RM2 systems.
+%
+%
+% Examples:
+%   p = set_atten(p,1,24); % set atten 1 to 24 dB
+
+if ~isfield(p.devices,'PA5') | isempty(p.devices.PA5)
+    p = set_tag_val(p,['atten_' num2str(atten_num)],atten_val);
+    return;
+end
+
+if length(p.devices.PA5) < atten_num
+    error('');
+end
+
+dev_type = [];
+dev_number = [];
+offset = 0;
+
+for iarg = 1:2:length(varargin)
+    keyword = varargin{iarg};
+    eval([keyword ' = varargin{iarg+1};']);
+end
+
+if isempty(dev_type)
+    % first find the device that defines this tag
+    foundit = 0;
+    dev_types = fieldnames(p.partags);
+    i_dev = 1;
+    dev_number = 1;
+
+    % start looking in the tags of the first device with tags. progress from
+    % there
+    while ~foundit
+        dev_type = dev_types{i_dev};  % RP2, RM2, etc.
+        if ismember(partag,p.partags.(dev_type){dev_number})
+            foundit = 1;
+        else
+            dev_number = dev_number+1;
+            if dev_number > length(p.partags.(dev_type))
+                i_dev = i_dev + 1;
+                if i_dev > length(dev_types)
+                    error(['Parameter tag ' '''partag''' ' not found.']);
+                end
+                dev_number = 1;
+            end
+        end
+    end
+end
+
+% now dev_type and dev_number specify the device implementing this tag
+dev = p.devices.(dev_type)(dev_number);
+if length(parval)==1
+    invoke(dev,'setTagVal',partag,parval);
+else
+    invoke(dev,'writeTagV',partag,offset,parval);
+end
+

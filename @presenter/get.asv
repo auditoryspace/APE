@@ -1,0 +1,44 @@
+function varargout = get(p,varargin)
+
+slotname = varargin{1};
+
+switch slotname
+    case 'status'
+                status = [];
+        dev_types = fieldnames(p.samprate);
+        for idevtype = 1:length(dev_types)
+            status = [status p.samprate.(dev_types{idevtype})];
+        end
+        if ~any(diff(samprates))
+            varargout = {samprates(1)}; % all devices share samprate
+        else
+            varargtout = {samprates}; % multiple samp rates
+        end
+
+    case 'partags'
+        partags = {};
+        dev_types = fieldnames(p.circuit_files);
+        for i = 1:length(dev_types)
+            dev_type = dev_types{i};
+            num_devs = length(p.devices.(dev_type));
+            for dev_number = 1:num_devs
+                partags = {partags{:} p.partags.(dev_type){dev_number}{:}};
+            end
+        end
+        varargout = {partags};
+    case 'add_commands'
+        varargout = {p.add_commands};
+    case 'samprate'
+        samprates = [];
+        dev_types = fieldnames(p.samprate);
+        for idevtype = 1:length(dev_types)
+            samprates = [samprates p.samprate.(dev_types{idevtype})];
+        end
+        if ~any(diff(samprates))
+            varargout = {samprates(1)}; % all devices share samprate
+        else
+            varargtout = {samprates}; % multiple samp rates
+        end
+    otherwise
+        error(sprintf('invalid slotname: %s',slotname));
+end

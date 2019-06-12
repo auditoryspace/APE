@@ -1,0 +1,29 @@
+function s = set(r,varargin)
+
+slotname = varargin{1};
+slotval = varargin{2};
+
+switch slotname
+    case 'par'
+        if nargin==2
+            s.params = slotval;
+        else
+            for iparam = 2:2:length(varargin)
+
+                paramname = varargin{iparam};
+                paramval = varargin{iparam+1};
+                s.params.(paramname) = paramval;
+            end
+        end
+    case 'tags'
+        s.tags = slotval;
+    case 'makeStimFunc'
+        s.makeStimFunc = slotval;
+    case 'readyFunc'
+        s.readyFunc = slotval;
+    case 'presentFunc'
+        s.presentFunc = slotval;
+
+    otherwise
+        error(sprintf('invalid slotname: %s',slotname));
+end

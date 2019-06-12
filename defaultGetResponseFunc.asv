@@ -1,0 +1,25 @@
+function r = defaultGetResponseFunc(r,myprompt)
+%function r = defaultGetResponseFunc(r,myprompt)
+%
+% This is the default getResponse function. Such functions take a responder
+% object <r> and (optionally) a presenter object <p>. In this case,
+% getResponse will simply prompt for user input with input() and store the
+% result in r.respdata.
+%
+% Other getResponseFuncs might set and read tags from <p> (e.g. for RBOX).
+% Any number of variables can be passed through to this function using
+% varargin.
+%
+% invoked by r = goGetResponse(r,varargin)
+
+if nargin > 1
+    r = set(r,'tags','prompt',myprompt);
+end
+
+if isfield(get(r,'tags'),'prompt')
+    prompt = get(r,'tags','prompt');
+else
+    prompt = '>';
+end
+
+r = set(r,'respdata',input(prompt));

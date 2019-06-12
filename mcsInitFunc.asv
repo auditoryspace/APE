@@ -1,0 +1,73 @@
+function t = mcsInitFunc(t,varargin)
+%function t =  mcsInitFunc(t,varargin)
+%
+%
+% this is the initFunc for MCS trackers. The idea is to arrange an array
+% with all combinations of a number of tracked variables. Be sure to set
+% t.params with the following fields:
+%
+%   tracked_vars: a struct. each field should have a name indicating the
+%       tracked variable name (e.g. freq, amp, or ITD). It's value should
+%       be an array with the unique values to be tested. You can tweak the
+%       distribution of values by entering more than one copy of a
+%       particular value...
+%   numtrials_perstim: a number. tracker will test each combination of
+%       values given in tracked_vars this many times.
+%   shuf_rule: a string indicating rule to govern shuffling of trials
+%       'full' means to shuffle the entire set of trials
+%       'blocks' means to shuffle so that all combos are presented once
+%           before proceeding to the second presentation
+
+% load in the tracker parameters
+params = get(t,'params');
+
+% I'm guessing that params should come in with some parameter values in
+% arrays
+
+% initialize the tracker status
+status = struct('currentTrial',0);
+status.done = 0;
+
+t = set(t,'status',status);
+
+
+% set up the tracker trialdata 
+%
+% include all the fields given in t.params.tracked_vars, as well as
+% response and target. 
+
+
+% first generate a matrix with all stim combinations
+allcombos = [];
+
+% make one copy of each stim combo
+varnames = fieldnames(params.tracked_vars);  % {'freq' 'amp' 'ITD'}
+for iVar = 1:length(varnames)
+    varname = varnames{iVar}; % 'freq' then 'amp'
+    varvals = params.tracked_vars.(varname); % [100 200 300] then [20 40]
+    orig_length = size(allcombos,2);
+    allcombos = repmat(allcombos,1,length(varvals)); % [] then [100 200 300 100 200 300]
+    allcombos(iVar,:) = reshape(repmat(varvals,orig_length,1),1,[]);
+    % [100 200 300] then [100 200 300 100 200 300; 20 20 20 30 30 30]
+end
+
+% next turn the matrix into an appropriate struct array
+foo = num2cell(allcombos);
+trialdata_1 = cell2struct(foo,varnames)'; % now 1xnumtrials struct
+
+trialdata = trialdata_1(1:0); % empty struct array with correct fields
+
+% now assemble the full trialdata by combining numtrials_persim copies of
+% trialdata_1
+for iTrial = 1:length(params.numtrials_persim)
+    % shuffle each set
+    trialdata = [trialdata trialdata_1(randperm(lenght(trialdata_1)))];
+end
+
+% if full shuffle, shuffle the full array
+if strcmp(params.shuf_rule,'full')
+    trialdata = trialdata(randperm(length(trialdata)));
+end
+
+% now inset the trialdata into t
+t = set(t,'trialdata',trialdata);

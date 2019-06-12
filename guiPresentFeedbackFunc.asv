@@ -1,0 +1,14 @@
+function r = rboxPresentFeedbackFunc(r,p,numbuttons,buttoncolors)
+%function r = rboxPresentFeedbackFunc(r,p,numbuttons,buttoncolors)
+%
+% This is the default presentFeedback function. Such functions take a responder
+% object <r> as the first argument. Other arguments are optional.
+% In this case, make a gui with <numbuttons> buttons and color them according 
+% to the color specs in 
+%
+% invoked by r = goPresentFeedback(r,varargin)
+
+set_tag_val(p,['LED' num2str(LEDnum)],1);
+pause(1);
+set_tag_val(p,['LED' num2str(LEDnum)],0);
+

@@ -1,0 +1,164 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf460
+{\fonttbl\f0\froman\fcharset0 TimesNewRomanPSMT;\f1\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;}
+\deftab720
+\pard\pardeftab720\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 2. APE Objects\
+\
+The current version of APE defines the following 5 types of object classes\
+\pard\pardeftab720\li360\ql\qnatural\pardirnatural
+\cf0 -
+\f1\fs22 experiment
+\f0\fs24 : this object maintains the \'93top level\'94 experimental parameters, data, and functions\
+-
+\f1\fs22 tracker
+\f0\fs24 : this object is responsible for tracking subject performance, determining the order in which trials are presented, and deciding when to stop testing.\
+-
+\f1\fs22 stim
+\f0\fs24 : this object defines a single type of stimulus, include stimulus parameters and the \'93recipes\'94 for creating the stimulus, preparing the hardware for presentation, and presenting the stimulus. Experiments may define a single 
+\f1\fs22 stim
+\f0\fs24  object whose parameters are modified from trial to trial, or multiple 
+\f1\fs22 stim
+\f0\fs24  objects which are presented at different times during the trial or run. The 
+\f1\fs22 stim
+\f0\fs24  object can be thought of as an interface between the experiment\'92s definition of stimuli and the TDT hardware\'92s implementation.\
+-
+\f1\fs22 responder
+\f0\fs24 : this object is responsible for interfacing with the subject: collecting responses, presenting feedback, etc. This may involve communication with the TDT hardware via a 
+\f1\fs22 presenter
+\f0\fs24  object or might interact directly with subjects via command-line or GUI interfaces.\
+-
+\f1\fs22 presenter
+\f0\fs24 : this object serves as a \'93wrapper\'94 for TDT hardware. It keeps track of TDT devices and their settings, and can reestablish communication with the hardware after resuming an experiment from disk. Future versions of APE will provide 
+\f1\fs22 presenter
+\f0\fs24  objects that interface with non-TDT audio hardware (e.g. PC soundcards).\
+\pard\pardeftab720\ql\qnatural\pardirnatural
+\cf0 \
+In most cases, APE Objects are not strongly dependent on one another, so experiments can make use of some classes while leaving out others. As an example, one experiment might use a 
+\f1\fs22 presenter
+\f0\fs24  object to interface with TDT hardware but control all other functions locally; another experiment might combine 
+\f1\fs22 presenter
+\f0\fs24 , 
+\f1\fs22 stim
+\f0\fs24 , and 
+\f1\fs22 responder
+\f0\fs24  objects to help segregrate stimulus-delivery and response-collection from the \'93main\'94 experimental code loop. Yet another experiment might use all APE object classes, maintaining experiment-level data and functions (as well as 
+\f1\fs22 tracker
+\f0\fs24 , 
+\f1\fs22 stim
+\f0\fs24 , 
+\f1\fs22 responder
+\f0\fs24 , and 
+\f1\fs22 presenter
+\f0\fs24  objects) in a single 
+\f1\fs22 experiment
+\f0\fs24  object; in that case, the \'93main loop\'94 can be made very simple, and storage of experiment data to disk is facilitated by save 
+\f1\fs22 experiment
+\f0\fs24  objects directly in 
+\f1\fs22 .mat
+\f0\fs24  files.\
+\
+Like all MATLAB classes, APE object classes define \'93slots\'94 for data, in this case parameter structures and function handles. Except in a few cases, APE objects\'92 data slots contain either structures (for example 
+\f1\fs22 stim.params
+\f0\fs24  is a structure for stimulus-specific parameters), objects (
+\f1\fs22 experiment.presenter
+\f0\fs24  should hold a 
+\f1\fs22 presenter
+\f0\fs24  object) or arrays of structures (
+\f1\fs22 experiment.trial_stim
+\f0\fs24  may be an array of 
+\f1\fs22 stim
+\f0\fs24  objects). In this way, custom data fields can be manipulated easily. As an example, consider a 
+\f1\fs22 stim
+\f0\fs24  object that implement a pure (sinusoidal) tone; let\'92s call that object 
+\f1\fs22 s_tone
+\f0\fs24 . Important parameters include frequency, amplitude, and phase, so we can set 
+\f1\fs22 s_tone.params
+\f0\fs24  accordingly:\
+\
+\pard\pardeftab720\li720\ql\qnatural\pardirnatural
+
+\f1\fs22 \cf0 my_params.frequency = 1000; % frequency in Hz\
+my_params.amplitude = 1; % amplitude as a scalar\
+my_params.phase = 0; % degrees starting phase\
+\
+s_tone = set(s_tone,\'92params\'92,my_params);\
+\pard\pardeftab720\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 \
+(take note of the last line. In general, data slots for APE objects are changed using the 
+\f1\fs22 set
+\f0\fs24  function\'85or rather, the 
+\i class method
+\i0  
+\f1\fs22 set
+\f0\fs24 \'85rather than the dot notation you may be familiar with using for structures). \
+\
+Next, imagine a 
+\f1\fs22 stim
+\f0\fs24  object, 
+\f1\fs22 s_sam
+\f0\fs24 , that defines a sinusoidally amplitude-modulated tone. In that case, 
+\f1\fs22 s_sam.params 
+\f0\fs24 clearly needs to have different fields than 
+\f1\fs22 s_tone.params
+\f0\fs24 :\
+\
+\pard\pardeftab720\li720\ql\qnatural\pardirnatural
+
+\f1\fs22 \cf0 my_params.frequency = 1000; % frequency in Hz\
+my_params.amplitude = 1; % amplitude as a scalar\
+my_params.phase = 0; % degrees starting phase\
+my_params.mod_rate = 5; % modulation rate in Hz\
+my_params.mod_depth = 0.5; % modulation depth as a scalar\
+\
+s_sam = set(s_sam,\'92params\'92,my_params);\
+\pard\pardeftab720\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 \
+Because 
+\f1\fs22 stim.params
+\f0\fs24  is a structure, its contents can be customized for each type of 
+\f1\fs22 stim
+\f0\fs24  object in an experiment, without forcing every 
+\f1\fs22 stim
+\f0\fs24  object to define the same (potentially irrelevant) parameters (such as 
+\f1\fs22 mod_rate
+\f0\fs24  for
+\f1\fs22  s_tone
+\f0\fs24 ). \
+\
+APE Objects also use their slots to specify function handles that tell MATLAB how to implement particular actions (like \'93make a new stimulus\'94). For example, 
+\f1\fs22 s_tone.makeStimFunc
+\f0\fs24  might be set to 
+\f1\fs22 @sinusoid
+\f0\fs24 , indicating that when the experiment calls the 
+\f1\fs22 stim
+\f0\fs24  
+\i class method
+\i0  
+\f1\fs22 goMakeStim
+\f0\fs24 , MATLAB will run the function 
+\f1\fs22 sinusoid
+\f0\fs24 , which should be a function that takes a 
+\f1\fs22 stim
+\f0\fs24  object as its first argument, then generates a sinusoid based on the parameters stored in that object\'92s 
+\f1\fs22 params
+\f0\fs24  slot (i.e. 
+\f1\fs22 stim.params.frequency
+\f0\fs24 ). By setting 
+\f1\fs22 s_sam.makeStimFunc 
+\f0\fs24 to 
+\f1\fs22 @generate_SAM
+\f0\fs24 , we can customize this behavior so that 
+\f1\fs22 goMakeStim(s_sam,\'85)
+\f0\fs24  generates SAM tones (using parameters in 
+\f1\fs22 s_sam.params
+\f0\fs24 ) while 
+\f1\fs22 goMakeStim(s_tone,\'85)
+\f0\fs24  generates sinusoids (using the parameters in 
+\f1\fs22 s_tone.params
+\f0\fs24 ). \
+\
+}

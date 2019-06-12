@@ -1,0 +1,63 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf460
+{\fonttbl\f0\froman\fcharset0 TimesNewRomanPSMT;\f1\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red34\green139\blue34;\red0\green0\blue255;\red160\green32\blue240;
+}
+\deftab720
+\pard\pardeftab720\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 APE Objects: tracker\
+Slots:\
+type \'96 string (\'91levitt\'92) etc\
+params \'96 struct\
+	special params subslots:\
+		logstep - set to 1 for log steps\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf2 % XXX added 3/4/09 by CS, allow user to specify log steps. In this case,\cf0 \
+\cf2 % status.steps will be log units (base 10), and adjustments of the tracked\cf0 \
+\cf2 % parameter will be multiples (or divisions) of the base amount\cf0 \
+\pard\pardeftab720\ql\qnatural
+\cf3 if\cf0  ~isfield(params,\cf4 'logstep'\cf0 )\
+    params.logstep = 0;\
+\cf3 end\
+i.e. \cf0         newval = curval * 10^(-status.step); \
+\
+\
+\cf3  
+\f0 \cf0 \
+\pard\pardeftab720\ql\qnatural\pardirnatural
+\cf0 status \'96 struct\
+trialdata \'96 array of struct\
+\
+Function handles:\
+initFunc \'96 set up track\
+updateFunc \'96 update track based on response\
+nextValueFunc \'96 tell experiment about next stim\
+plotFunc \'96 plot track\
+reportFunc \'96 report results (thresh?)\
+\
+Methods:\
+tracker()\
+display()\
+get()\
+set()\
+goInit()\
+goUpdate()\
+goNextValue()\
+goPlot()\
+goReport()\
+checkDone() - returns t.status.done\
+\
+APE Objects: tracker\
+tracker \'91types\'92\
+as for responders, defined collections of functions for different tracker behaviors\
+\'91default\'92 \'96 not yet defined. likely will be MCS\
+\'91levitt\'92 \'96 N up / M down adaptive track. \
+t = levittUpdateFunc(t,trial,resp,target); etc\
+Counts and wastes arbitrary numbers of reversal, shifts between multiple step sizes, etc. \
+\'91mcs\'92 \'96 method of constant stimuli\
+t = mcsUpdateFunc(t,trial); etc\
+Can set tracker type at init \
+t = tracker(\'91type\'92,\'92levitt\'92);\
+\
+\page }

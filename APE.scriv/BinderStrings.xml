@@ -1,0 +1,729 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>16</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string>Programming experiments with the APE (Abstract Program for Experiments)  Chris Stecker  1. What is APE?   APE (Abstract Program for Experiments) is a set of MATLAB software components designed to facilitate rapid development of psychoacoustical experiments using Tucker-Davis Technologies (TDT) System 3 signal-processing hardware. Its development originated in my lab at the University of Washington as an approach to programming experiments that were easily expandable to accommodate new experiment...</string>
+		<key>Text</key>
+		<string>Programming experiments with the APE (Abstract Program for Experiments)
+
+Chris Stecker
+
+1. What is APE? 
+
+APE (Abstract Program for Experiments) is a set of MATLAB software components designed to facilitate rapid development of psychoacoustical experiments using Tucker-Davis Technologies (TDT) System 3 signal-processing hardware. Its development originated in my lab at the University of Washington as an approach to programming experiments that were easily expandable to accommodate new experimental methods. As our repertoire of experimental techniques expanded it became clear that what we needed was an abstract framework for experimental programs; one that would provide useful default behaviors but allow customization to perform arbitrary experimental tasks. 
+
+The opportunity to develop a completely abstract program for experiments came in June 2007, when I spent a month at the National Center for Rehabilitative Auditory Research (NCRAR) of the Portland Oregon VA Medical Center. There, collaborating with Erick Gallun, Michelle Molis, and Marjorie Leek, I wrote most of the code for the first full version of APE, APE zero. 
+
+The goals for APE’s development included a modular framework for experiment development using TDT System 3 and MATLAB. We wanted experiment programs to be easy to understand, with key elements maintained in logical places, consistent programming across experiments, and easy-to-access default or reusable functions. We wanted a modular design, so that individual components of a program could be easily modified or replaced, experiments could be upgraded without maintaining multiple versions, and commonly used code could be easily maintained and shared. Finally, we wanted APE to include as much device-independent behavior as possible, so that different TDT hardware setups could run the same programs with identical methods, and working experiments could be easily modified to use different methods (for example, switching from a button box to a touch-screen for subject testing).
+
+Two major design decisions were made to support these goals. The first was to use object-oriented programming (“Classes and objects” in MATLAB terminology) so that related data could be grouped together, along with relevant functions. Object-oriented programming offers other advantages, too, such as hiding implementation details, code customization via “subclasses,” etc. Please refer to MATLAB documentation for more information about classes and objects. The second design decision was to use function handles for customize experiments. Thus, common experimental procedures such “make a new stimulus” are defined in APE (in this case by the stim class method goMakeStim), and these function calls are mapped to either default or custom functions written by the experiment. In this example, those functions are indicated by the stim property makeStimFunc. The use of function handles means that the actual code underlying experiment events in APE is abstract, in that it does not tell MATLAB specifically what to do, but rather where to look for the necessary instructions. Please refer to MATLAB documentation for more about function handles. 
+
+</string>
+		<key>Title</key>
+		<string>What is APE</string>
+	</dict>
+	<key>17</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>2. APE Objects
+
+The current version of APE defines the following 5 types of object classes
+-experiment: this object maintains the “top level” experimental parameters, data, and functions
+-tracker: this object is responsible for tracking subject performance, determining the order in which trials are presented, and deciding when to stop testing.
+-stim: this object defines a single type of stimulus, include stimulus parameters and the “recipes” for creating the stimulus, preparing the hardware for presentation, and presenting the stimulus. Experiments may define a single stim object whose parameters are modified from trial to trial, or multiple stim objects which are presented at different times during the trial or run. The stim object can be thought of as an interface between the experiment’s definition of stimuli and the TDT hardware’s implementation.
+-responder: this object is responsible for interfacing with the subject: collecting responses, presenting feedback, etc. This may involve communication with the TDT hardware via a presenter object or might interact directly with subjects via command-line or GUI interfaces.
+-presenter: this object serves as a “wrapper” for TDT hardware. It keeps track of TDT devices and their settings, and can reestablish communication with the hardware after resuming an experiment from disk. Future versions of APE will provide presenter objects that interface with non-TDT audio hardware (e.g. PC soundcards).
+
+In most cases, APE Objects are not strongly dependent on one another, so experiments can make use of some classes while leaving out others. As an example, one experiment might use a presenter object to interface with TDT hardware but control all other functions locally; another experiment might combine presenter, stim, and responder objects to help segregrate stimulus-delivery and response-collection from the “main” experimental code loop. Yet another experiment might use all APE object classes, maintaining experiment-level data and functions (as well as tracker, stim, responder, and presenter objects) in a single experiment object; in that case, the “main loop” can be made very simple, and storage of experiment data to disk is facilitated by save experiment objects directly in .mat files.
+
+Like all MATLAB classes, APE object classes define “slots” for data, in this case parameter structures and function handles. Except in a few cases, APE objects’ data slots contain either structures (for example stim.params is a structure for stimulus-specific parameters), objects (experiment.presenter should hold a presenter object) or arrays of structures (experiment.trial_stim may be an array of stim objects). In this way, custom data fields can be manipulated easily. As an example, consider a stim object that implement a pure (sinusoidal) tone; let’s call that object s_tone. Important parameters include frequency, amplitude, and phase, so we can set s_tone.params accordingly:
+
+my_params.frequency = 1000; % frequency in Hz
+my_params.amplitude = 1; % amplitude as a scalar
+my_params.phase = 0; % degrees starting phase
+
+s_tone = set(s_tone,’params’,my_params);
+
+(take note of the last line. In general, data slots for APE objects are changed using the set function…or rather, the class method set…rather than the dot notation you may be familiar with using for structures). 
+
+Next, imagine a stim object, s_sam, that defines a sinusoidally amplitude-modulated tone. In that case, s_sam.params clearly needs to have different fields than s_tone.params:
+
+my_params.frequency = 1000; % frequency in Hz
+my_params.amplitude = 1; % amplitude as a scalar
+my_params.phase = 0; % degrees starting phase
+my_params.mod_rate = 5; % modulation rate in Hz
+my_params.mod_depth = 0.5; % modulation depth as a scalar
+
+s_sam = set(s_sam,’params’,my_params);
+
+Because stim.params is a structure, its contents can be customized for each type of stim object in an experiment, without forcing every stim object to define the same (potentially irrelevant) parameters (such as mod_rate for s_tone). 
+
+APE Objects also use their slots to specify function handles that tell MATLAB how to implement particular actions (like “make a new stimulus”). For example, s_tone.makeStimFunc might be set to @sinusoid, indicating that when the experiment calls the stim class method goMakeStim, MATLAB will run the function sinusoid, which should be a function that takes a stim object as its first argument, then generates a sinusoid based on the parameters stored in that object’s params slot (i.e. stim.params.frequency). By setting s_sam.makeStimFunc to @generate_SAM, we can customize this behavior so that goMakeStim(s_sam,…) generates SAM tones (using parameters in s_sam.params) while goMakeStim(s_tone,…) generates sinusoids (using the parameters in s_tone.params). 
+
+</string>
+		<key>Title</key>
+		<string>APE Objects</string>
+	</dict>
+	<key>18</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>3. Designing experiments with APE
+
+So, how do you use APE to design experiments, and how is it different from writing experiments from scratch? We can contrast two approaches to experiment programming in APE, a top-down approach and a bottom-up approach. Both take advantage of APE’s ability to hide programming details inside objects like stim and presenter, customizing those objects’ behaviors as you go. The top-down and bottom-up approaches are not exclusive (you might adopt some aspects of both when programming an experiment), but they do represent different perspectives that are useful to compare and contrast.
+
+3.a The top-down approach. 
+
+The abstract nature of APE objects lends itself quite naturally to a programming practice called abstraction, or top-down programming. This basically means designing the large-scale aspects of your program first, filling in the details later. By keeping programmers focused on how the “big picture” works, abstraction helps big programs to maintain consistent, logical, functionality. It also allows programmers to put off figuring out the details of particularly tricky operations until a later time, or to delegate programming tasks to others. For example, lets say want to develop an experiment that tests listeners’ perception of iterated rippled noise (IRN) stimuli. You could write most of the program elements for selecting and presenting stimuli, collecting responses, and scoring performance without knowing how to implement the IRN stimulus. You can assume you will define a stim object, stim_IRN, that will respond to the normal stim class methods, such as goMakeStim and goPresent, without knowing (yet) what parameters to put in stim_IRN.params or what function handle to put in stim_IRN.makeStimFunc. You might even write the main program while a colleague implements stim_IRN. Because APE objects conform to a standard set of class methods, you can be certain that your colleague’s stim_IRN will work with your program (assuming that appropriate code for the TDT hardware is written to support stim_IRN, etc.). 
+
+3.a.1 Top-Down, Step-by-Step
+
+3.b The bottom-up approach
+
+3.b.1 Bottom-Up, Step-by-Step
+
+</string>
+		<key>Title</key>
+		<string>Designing Experimentsts</string>
+	</dict>
+	<key>19</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>APE Object reference (under construction).
+This section presents (or will present) a more detailed view of each APE object, its slots and methods, and notes on its use
+
+
+</string>
+		<key>Title</key>
+		<string>APE Object Reference</string>
+	</dict>
+	<key>20</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>4. APE Reference
+
+5. APE versions
+
+6. Acknowledgments
+
+
+</string>
+		<key>Title</key>
+		<string>APE Objects-2</string>
+	</dict>
+	<key>23</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>APE Objects: stim
+Slots:
+params – stim parameters set 	in experiment
+tags – TDT control tags defined 	in .rcx file
+
+Function handles:
+makeStimFunc – generate tags from params
+readyFunc – upload tags to RP2
+presentFunc – trigger RP2
+
+Methods:
+stim() – constructor
+display()
+set()
+get()
+goMakeStim()
+goReady()
+goPresent()
+
+</string>
+		<key>Title</key>
+		<string>stim</string>
+	</dict>
+	<key>24</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>APE Objects: responder
+
+Slots:
+params – struct
+respData – struct
+
+Function handles:
+prepResponseFunc – make TDT ready (reset latch?)
+getResponseFunc
+presentFeedbackFunc
+waitForSubjectFunc
+tellDoneFunc
+
+Methods:
+responder()
+display()
+set()
+get()
+goPrepResponse()
+goGetResponse()
+goPresentFeedback()
+goWaitForSubject()
+goTellDone()
+
+APE Objects: responder
+
+Responder ‘types’
+Sets of functions define default or “canned” behavior for different types of responses
+‘default’ uses command line
+r = defaultGetResponseFunc(r); etc.
+‘rbox’ uses TDT rbox
+r = rboxGetResponseFunc(r,p); etc. 
+needs access to presenter object
+‘gui’ puts up a simple window with N buttons
+r = guiGetResponseFunc(r,N)
+‘gui2’ similar but window is maintained across trials
+r = gui2GetResponseFunc(r,N);
+
+Can init responder by including ‘type’ as first arg to responder()
+r = responder(‘type’,’rbox’); creates default rbox responder
+
+ 
+</string>
+		<key>Title</key>
+		<string>responder</string>
+	</dict>
+	<key>25</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>APE Objects: tracker
+Slots:
+type – string (‘levitt’) etc
+params – struct
+	special params subslots:
+		logstep - set to 1 for log steps
+% XXX added 3/4/09 by CS, allow user to specify log steps. In this case,
+% status.steps will be log units (base 10), and adjustments of the tracked
+% parameter will be multiples (or divisions) of the base amount
+if ~isfield(params,'logstep')
+    params.logstep = 0;
+end
+i.e.         newval = curval * 10^(-status.step); 
+
+
+ 
+status – struct
+trialdata – array of struct
+
+Function handles:
+initFunc – set up track
+updateFunc – update track based on response
+nextValueFunc – tell experiment about next stim
+plotFunc – plot track
+reportFunc – report results (thresh?)
+
+Methods:
+tracker()
+display()
+get()
+set()
+goInit()
+goUpdate()
+goNextValue()
+goPlot()
+goReport()
+checkDone() - returns t.status.done
+
+APE Objects: tracker
+tracker ‘types’
+as for responders, defined collections of functions for different tracker behaviors
+‘default’ – not yet defined. likely will be MCS
+‘levitt’ – N up / M down adaptive track. 
+t = levittUpdateFunc(t,trial,resp,target); etc
+Counts and wastes arbitrary numbers of reversal, shifts between multiple step sizes, etc. 
+‘mcs’ – method of constant stimuli
+t = mcsUpdateFunc(t,trial); etc
+Can set tracker type at init 
+t = tracker(‘type’,’levitt’);
+
+</string>
+		<key>Title</key>
+		<string>tracker</string>
+	</dict>
+	<key>26</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>APE Objects: presenter (slots)
+devices – struct, manages activeX handles by dev type 
+.RP2  (array of RP2 actx)
+.PA5 (etc)
+other structs similarly manage device data:
+circuit_files (fields are cell arrays of .rcx or .rco file names) 
+samprate (fields contain samprates of RP devs)
+partags (fields are cell arrays of tag names defined by rcx files
+status (fields are status of each device)
+
+add_commands – cell array of arguments to add_device
+used by recreate() to create new presenter object identical to this one, but running. 
+
+APE Objects: presenter (methods)
+presenter() – constructor
+display() 
+add_device() – main implementation call
+rm_device()
+reload_circuit() – force reload from disk, change file or samprate, etc
+recreate() – reinstantiate all (recovers from power down)
+set_tag_val() – TDT wrapper for SetTagVal and WriteTagV
+get_tag_val() – TDT wrapper to GetTagVal and ReadTagV
+soft_trig() – TDT wrapper to SoftTrg
+z_trig() – TDT wrapper to ZTrig
+set_atten() – control PA5 atten, or set atten_X tags on RP2 / RM1
+pa5_display() – control display of PA5
+scroll_text() – scroll messages on PA5 display (glitchy)
+run_TDT()
+halt_TDT()
+</string>
+		<key>Title</key>
+		<string>presenter</string>
+	</dict>
+	<key>27</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>APE Objects: experiment (slots)
+params - struct
+stimparams - struct
+status – struct
+trialdata – array of struct
+
+presenter - object
+responder - object
+tracker – array of trackers
+stim_templates –array or 	struct of stim objects
+trial_stim – array of stim 	objects
+
+initFunc
+prepTrialFunc
+presentTrialFunc
+reportTrialFunc
+pauseFunc
+resumeFunc
+saveDataFunc
+wrapupFunc
+
+APE Objects: experiment (methods)
+experiment()
+display()
+get()
+set()
+goInit() – init other objects &amp; data structures
+goPrepTrial() – construct trial_stim 
+goPresentTrial() – present stim, response, feedback?
+goReportTrial() – update experimenter’s display
+goPause() – anything that needs doing at pause
+goResume() – …at resume (recreate presenter?)
+goSaveData() – write objects and/or data to disk
+goWrapup() – anything else?
+
+APE Objects: experiment
+ex.trackers – array of tracker objects
+could be length 1: single track (default) 
+length 2+: prepTrialFunc should be choosing a track to update on each trial
+ex.stim_templates – can be array of stim objects:
+e.g. I may have 20 frozen noise stim. Draw one on each trial
+ex.stim_templates – can be struct of stim objects, e.g.:
+ex.stim_templates.A  defines stim type A, .B defines stim type B
+choose a stim type for each interval
+ex.trial_stim – the actual stim to call goMakeStim, etc. on
+could be array of stim, 1 per interval (default)
+could be single stim whose params are adjusted for each interval
+
+APE Objects: experiment
+trialdata - array (1 by Ntrials) of struct
+each element contains values for all trial-varying parameters and data, e.g.:
+tracked stimulus parameters
+roved stimulus parameters
+target interval / correct response
+response and reaction time
+clock time?
+track number?
+ongoing estimates of threshold, etc?
+trackers also define trialdata, but only include trials for that track
+tracked value
+response, target
+step, reversal, etc.
+
+
+APE Objects: experiment
+Some experiment objects have sensible ‘default’ behavior
+defaultResumeFunc() recreates ex.presenter
+
+Others should be overridden by study-specific behavior
+defaultPrepTrial() 
+uses ex.params.intervals (‘AXXA’)…
+ to generate trial_stim ([stimA stimA stimB stimA]) …
+based on stim contained in stim_templates.A, stim_templates.B, etc 
+Your experiment will probably do something different…? 
+APE Objects: experiment
+Pausing, Saving, Resuming for long runs
+Special status fields
+ex.status.currentTrial	
+ex.status.paused
+If you design your main loop using while rather than for, or set up your for loop with ex.status.currentTrial in mind,
+main loop can start up at arbitrary trial number
+execution can be “paused,” then “resumed” later
+saving ex object to disk allows to resume after load
+TDT status may have changed…set ex.resumeFunc to call 
+		ex.presenter = recreate(ex.presenter); 
+ex.saveDataFunc: save the object, possibly also save xls or dlm file
+
+defaultExPrepTrialFunc
+	defines use of targints (`XX' `-XX-' `AXB' etc)
+	defines use of ex.params.rove (struct with fields giving to roving params for stim)
+		i.e., to use:
+			ex.params.rove.ICIrove = 10; % +/- 10% ICI rove
+			ex.params.rove.ABLrove = 5; % +/- 5 dB ABL
+			in stim.makeStimFunc, stim.params.ICIrove = 10; stim.params.ABLrove = 5; use it</string>
+		<key>Title</key>
+		<string>experiment</string>
+	</dict>
+	<key>28</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string>Appendix: Experiment programming decisions
+How much APE to use?
+presenter only (to simplify TDT interface)
+presenter + stim + responder
+include experiment object only to store data &amp; objects; write presentation, etc. functions directly in main program. 
+use experiment methods (goInit) etc to compartmentalize functions (as subfunctions within main file or separate m-files)
+One stim or two? 
+Most experiments could use one stim object, modifying its params between intervals (to turn a tone on / off, etc).
+Alternative is to generate one stim for each interval
+In most cases, no difference. Choose accordingly.
+Experiment programming decisions
+Object types vs object classes
+Object-oriented approach allows to incorporate new functionality by subclassing (new objects that inherit behavior of parents).
+APE approach has been instead to make objects general enough that different ‘types’ of each object can be created by supplying different function handles and appropriate contents for params, status, etc. 
+Each experiment will have its own ‘type’ of stim, responder, tracker, and experiment objects (though many default functions may be used, at least a few will be custom). Some of these custom types (or their component functions) might get re-used in other experiments. 
+
+When would subclassing become necessary? Never? 
+Still to do
+More tracker types
+More example experiment programs
+Oticon 16-tracker ripple study, NIH IRN study, UW head-tracked studies, other basic paradigms (single-interval tone-in-noise, etc).
+GUI integration
+Pretty straightforward. Expect GUI to collect params prior to object initialization, monitor pause, plot track(s), etc. 
+GUI “checklist”?
+More complete documentation
+Fill out the MATLAB help
+Tutorial manual
+
+
+</string>
+		<key>Title</key>
+		<string>experiment-1</string>
+	</dict>
+	<key>3</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string></string>
+		<key>Text</key>
+		<string></string>
+		<key>Title</key>
+		<string>Untitled</string>
+	</dict>
+	<key>7</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string>8  dir 4 svn+ssh://spacelab.sphsc.washington.edu/Volumes/labdocs/svn.repos/matlab/trunk/APE/@experiment svn+ssh://spacelab.sphsc.washington.edu/Volumes/labdocs/svn.repos    2009-06-19T22:57:06.788075Z 2 cstecker   svn:special svn:externals svn:needs-lock            d56e0116-048d-4efd-a581-028a7e7128e1  goResume.m file     2009-06-19T23:05:05.000000Z 196b9e1e32815fcb9c915f8416cae04b 2009-06-19T22:57:06.788075Z 2 cstecker  set.asv file     2009-06-19T23:05:05.000000Z e8e8231b1a17e225a63f52432c03...</string>
+		<key>Text</key>
+		<string>8
+
+dir
+4
+svn+ssh://spacelab.sphsc.washington.edu/Volumes/labdocs/svn.repos/matlab/trunk/APE/@experiment
+svn+ssh://spacelab.sphsc.washington.edu/Volumes/labdocs/svn.repos
+
+
+
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+d56e0116-048d-4efd-a581-028a7e7128e1
+
+goResume.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+196b9e1e32815fcb9c915f8416cae04b
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+set.asv
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+e8e8231b1a17e225a63f52432c03fc93
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+goPrepTrial.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+80893dd9aecc17bb3f6c53e2145db01e
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+goInit.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+3d307db39daa7e41cc5ddd3bb1a4e0fd
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+set.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+cfec3bd44e59dc5d33ed4775ce9f7ac4
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+goReportTrial.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+f08f4b9b9ad4ddd4fdfc24979db5b711
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+goPresentTrial.asv
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+9b76ad2bde326dd43a12e40a765c2668
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+goPresentTrial.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+d2e0a82f816481ab08a5e492ccd8906a
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+goPause.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+9ae2c2189e24da8c75bc6a0dd922bb12
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+goWrapup.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+82e59d4672a2f313b61a0daf08747643
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+display.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+7c6d9c643b2e4e2a28a6e258d2dadf84
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+get.asv
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+83f1e631a1ffddd20cc4277b0100e57f
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+experiment.asv
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+631662b62ac909c587f71942dd23e634
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+goSaveData.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+2aa7b0eb2a44f8c93b0cbdecb9b6fdea
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+get.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+5a4c145c6c27afc10ccfbef3c6de2b4a
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+experiment.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+a68ea13d09a6ba9541b8f4d6726cf4d3
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+checkDone.m
+file
+
+
+
+
+2009-06-19T23:05:05.000000Z
+b80bf6fc723f332d96f86412cd72ba89
+2009-06-19T22:57:06.788075Z
+2
+cstecker
+
+</string>
+		<key>Title</key>
+		<string>entries</string>
+	</dict>
+	<key>8</key>
+	<dict>
+		<key>Notes</key>
+		<string></string>
+		<key>Synopsis</key>
+		<string>8 </string>
+		<key>Text</key>
+		<string>8
+</string>
+		<key>Title</key>
+		<string>format</string>
+	</dict>
+</dict>
+</plist>

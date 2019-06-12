@@ -1,0 +1,56 @@
+function r = touchlineWaitForSubjectFunc(r,varargin)
+%function r = touchlineWaitForSubjectFunc(r,r,numbuttons,pos,nocursor,buttontitles,buttonpos)
+%
+% Put a button on the screen and wait for subject to click it. 
+%
+% Provide window position as an optional second argument [10/5/09]
+%
+% invoked by r = goWaitForSubject(r,varargin)
+
+
+f = figure('name','Click to start','MenuBar','none');
+
+    if nargin>1
+        pos = varargin{1};
+    else
+        pos = get(f,'Position');
+        pos(4) = pos(3)./4;
+    end
+
+    set(f,'Position',pos);
+
+
+% p = get(f,'Position');
+%     p(4) = p(3)./4;
+%     set(f,'Position',p);
+
+    marginLR = .05; % margin at Left and Right
+    marginTB = .12; % margin at Top and Bottom
+    butwidth = (1-(2.*marginLR));
+    butleft = marginLR;
+    butheight = 1-2.*marginTB;
+    butbottom = marginTB;
+
+       u = uicontrol('units','normalized','callback',@clickme,...
+            'position',[butleft butbottom butwidth butheight],...
+            'fontunits','normalized','fontsize',0.8,...
+            'tag',num2str(i),'string','Start');
+
+% loop to wait for subject response
+tic
+mydata = [];
+while isempty(mydata)
+    drawnow;
+    mydata = get(f,'UserData'); % clickme will fill f's UserData
+end
+close(f);    % close the fig
+
+%%% ------------------------------------------------------------------
+%%% clickme - the button callback
+%%% ------------------------------------------------------------------
+function mydata = clickme(varargin)
+
+rt = toc; % measure reaction time
+mydata.button = str2num(get(gcbo,'tag')); % figure out what button was pressed
+mydata.reactiontime = rt;
+set(get(gcbo,'Parent'),'UserData',mydata); % store the data in the GUI figure

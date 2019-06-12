@@ -1,0 +1,100 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf460
+{\fonttbl\f0\froman\fcharset0 TimesNewRomanPSMT;}
+{\colortbl;\red255\green255\blue255;}
+\deftab720
+\pard\pardeftab720\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 APE Objects: experiment (slots)\
+params - struct\
+stimparams - struct\
+status \'96 struct\
+trialdata \'96 array of struct\
+\
+presenter - object\
+responder - object\
+tracker \'96 array of trackers\
+stim_templates \'96array or 	struct of stim objects\
+trial_stim \'96 array of stim 	objects\
+\
+initFunc\
+prepTrialFunc\
+presentTrialFunc\
+reportTrialFunc\
+pauseFunc\
+resumeFunc\
+saveDataFunc\
+wrapupFunc\
+\
+APE Objects: experiment (methods)\
+experiment()\
+display()\
+get()\
+set()\
+goInit() \'96 init other objects & data structures\
+goPrepTrial() \'96 construct trial_stim \
+goPresentTrial() \'96 present stim, response, feedback?\
+goReportTrial() \'96 update experimenter\'92s display\
+goPause() \'96 anything that needs doing at pause\
+goResume() \'96 \'85at resume (recreate presenter?)\
+goSaveData() \'96 write objects and/or data to disk\
+goWrapup() \'96 anything else?\
+\
+APE Objects: experiment\
+ex.trackers \'96 array of tracker objects\
+could be length 1: single track (default) \
+length 2+: prepTrialFunc should be choosing a track to update on each trial\
+ex.stim_templates \'96 can be array of stim objects:\
+e.g. I may have 20 frozen noise stim. Draw one on each trial\
+ex.stim_templates \'96 can be struct of stim objects, e.g.:\
+ex.stim_templates.A  defines stim type A, .B defines stim type B\
+choose a stim type for each interval\
+ex.trial_stim \'96 the actual stim to call goMakeStim, etc. on\
+could be array of stim, 1 per interval (default)\
+could be single stim whose params are adjusted for each interval\
+\
+APE Objects: experiment\
+trialdata - array (1 by Ntrials) of struct\
+each element contains values for all trial-varying parameters and data, e.g.:\
+tracked stimulus parameters\
+roved stimulus parameters\
+target interval / correct response\
+response and reaction time\
+clock time?\
+track number?\
+ongoing estimates of threshold, etc?\
+trackers also define trialdata, but only include trials for that track\
+tracked value\
+response, target\
+step, reversal, etc.\
+\
+\
+APE Objects: experiment\
+Some experiment objects have sensible \'91default\'92 behavior\
+defaultResumeFunc() recreates ex.presenter\
+\
+Others should be overridden by study-specific behavior\
+defaultPrepTrial() \
+uses ex.params.intervals (\'91AXXA\'92)\'85\
+ to generate trial_stim ([stimA stimA stimB stimA]) \'85\
+based on stim contained in stim_templates.A, stim_templates.B, etc \
+Your experiment will probably do something different\'85? \
+APE Objects: experiment\
+Pausing, Saving, Resuming for long runs\
+Special status fields\
+ex.status.currentTrial	\
+ex.status.paused\
+If you design your main loop using while rather than for, or set up your for loop with ex.status.currentTrial in mind,\
+main loop can start up at arbitrary trial number\
+execution can be \'93paused,\'94 then \'93resumed\'94 later\
+saving ex object to disk allows to resume after load\
+TDT status may have changed\'85set ex.resumeFunc to call \
+		ex.presenter = recreate(ex.presenter); \
+ex.saveDataFunc: save the object, possibly also save xls or dlm file\
+\
+defaultExPrepTrialFunc\
+	defines use of targints (`XX' `-XX-' `AXB' etc)\
+	defines use of ex.params.rove (struct with fields giving to roving params for stim)\
+		i.e., to use:\
+			ex.params.rove.ICIrove = 10; % +/- 10% ICI rove\
+			ex.params.rove.ABLrove = 5; % +/- 5 dB ABL\
+			in stim.makeStimFunc, stim.params.ICIrove = 10; stim.params.ABLrove = 5; use it\page }

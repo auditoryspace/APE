@@ -1,0 +1,15 @@
+function t = levittInitFunc(t,varargin)
+%function t = levittInitFunc(t,varargin)
+%
+
+params = get(t,'params');
+
+
+status = struct('numreversals',0,'ncorrect',0,'nwrong',0,'goingup',0,'goingdown',0);
+status.steps = params.step;
+status.step = status.steps(1);
+status.stepreversals = params.stepreversals;
+
+t = set(t,'status',status);
+
+trialdata = ge

@@ -1,0 +1,82 @@
+function t = set(t,varargin)
+
+
+slotname = varargin{1};
+slotval = varargin{2};
+
+switch slotname
+    case 'type'
+        t.type = slotval;
+    case 'params'
+        if nargin==3
+            t.params = slotval;
+        else
+            for iparam = 2:2:length(varargin)
+
+                paramname = varargin{iparam};
+                paramval = varargin{iparam+1};
+                t.params.(paramname) = paramval;
+            end
+        end
+    case 'status'
+        if nargin==3
+            t.status = slotval;
+        else
+            for iparam = 2:2:length(varargin)
+
+                paramname = varargin{iparam};
+                paramval = varargin{iparam+1};
+                t.status.(paramname) = paramval;
+            end
+        end
+    case 'trialdata'
+        switch nargin
+            case 3
+                % setting trialdata field directly & in full
+                t.trialdata = slotval;
+            case 4
+                for iparam = 2:2:length(varargin)
+                    paramname = varargin{iparam};
+                    paramval = varargin{iparam+1};
+                    if isnumeric(paramname)
+                        % setting one trial of trialdata
+                        t.trialdata(paramname) = paramval;
+            
+                    else
+                        % setting one of the trialdata fields...need to
+                        % handle several (sub) cases
+                        % if sent a 1-by-ntrials (cell or other) array, then assign each
+                        % element to one of the trials. If sent a single
+                        % value, then assign it to every trial. 
+                             if iscell(paramval)
+                                [t.trialdata.(paramname)] = deal(paramval{:});
+                            else
+                                cellval = num2cell(paramval);
+                                [t.trialdata.(paramname)] = deal(cellval{:});
+                            end
+                                    
+
+                        if isnumeric(paramval) & length(paramval) == length(t)
+                        % user has sent a 1-by-ntrials numeric array. set each trial accordingly                       
+                    end
+                end
+            case 5
+                % setting one field of one trial
+
+        end
+                
+    case 'initFunc'
+        t.initFunc = slotval;
+    case 'updateFunc'
+        t.updateFunc = slotval;
+    case 'nextValueFunc'
+        t.nextValueFunc = slotval;
+    case 'plotFunc'
+        t.plotFunc = slotval;
+    case 'reportFunc'
+        t.reportFunc = slotval;
+        
+
+    otherwise
+        error(sprintf('invalid slotname: %s',slotname));
+end

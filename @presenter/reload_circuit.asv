@@ -1,0 +1,46 @@
+function p = reload_circuit(p,circuit_name,varargin)
+% function p = reload_circuit(p,circuit_name)
+% function p = reload_circuit(p,circuit_name,'samprate',samrate)
+% function p = reload_circuit(p,circuit_name,'dev_type',dev_type,'dev_number',dev_number)
+%
+% Change or reload the circuit running on a device
+%
+% p: presenter object
+% circuit_name: file name of circuit leave off or empty to reload current
+%
+% enter the following as <keyword,value> pairs
+% samprate: specify sampling rate
+% dev_type and dev_num: specify device type and number to trigger. Leave
+%   off for default behavior: reload first device capable of running circuits
+%
+% Examples: 
+% p = reload_circuit(p,'simple_tone.rcx'); % load circuit on first RP device
+% p = reload_circuit(p,[],'samprate',25000); % change samprate on current circuit
+% p = reload_circuit(p,'simple_tone.rcx','dev_type','RX6','dev_number',2); % load on 2nd RX6
+
+if nargin <2
+    circuit_name = [];
+end
+
+dev_type = [];
+dev_number = [];
+samprate = [];
+
+for iarg = 1:2:length(varargin)
+    keyword = varargin{iarg};
+    eval([keyword ' = varargin{iarg+1};']);
+end
+
+if isempty(dev_type)
+    % first find the device that runs circuits
+    dev_types = fieldnames(p.circuit_files);
+    dev_type = dev_types{1};
+    dev_number = 1;
+end
+
+dev = p.devices.(dev_type)(dev_number);
+if isempty(circuit_name)
+    circuit_name = p.circuit_files.(dev_type){dev_number};
+end
+    
+invoke(dev,'SoftTrg',trig_num);

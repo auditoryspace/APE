@@ -1,0 +1,28 @@
+function r = ardboxPresentFeedbackFunc(r,target,correct)
+%function r = ardboxPresentFeedbackFunc(r,target,correct)
+%
+% This is the default presentFeedback function. Such functions take a responder
+% object <r> as the first argument. Other arguments are optional.
+% In this case, the LED corresponding to the correct response will light 
+% for one second.
+%
+% invoked by r = goPresentFeedback(r,varargin)
+
+
+% get the device
+s = get(r,'params','device');
+
+% set it up if missing
+% if isempty(instrfind) || ~exist(get(s,'port')) || ~strcmp(get(s,'status'),'open')
+if isempty(instrfind) || ~strcmp(get(s,'status'),'open')
+    s = ardboxInitFunc;
+    r = set(r,'params','device',s);
+    fprintf(s,'LR\n');
+    pause(1);
+end
+
+
+
+% turn it on for one second
+cmd = sprintf('SF %d 255 1000\n',correct);
+fprintf(s,cmd);

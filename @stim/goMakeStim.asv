@@ -1,0 +1,10 @@
+function s = goMakeStim(s,varargin)
+%function s = goMakeStim(s,makeStimFunc)
+
+for i = 1:length(s)
+    if nargin > 1
+        s(i).makeStimFunc = makeStimFunc;
+    end
+
+    s(i).tags = feval(s(i).makeStimFunc,s(i).params);
+end

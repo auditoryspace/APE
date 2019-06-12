@@ -1,0 +1,10 @@
+function [val t] = levittNextValueFunc(t)
+
+nextvalue = get(t,'trialdata','nextvalue');
+
+iTrial = length(nextvalue);
+
+val = nextvalue(end);
+trialdata.currentvalue(end+1) = nextvalue(iTrial);
+
+t = set(t,'trialdata',iTrial+1,'currentvalue',nextvalue(iTrial));

@@ -1,0 +1,89 @@
+function ex = defaultExInitFunc(ex)
+% ex = defaultExInitFunc(ex)
+%
+% This function initializes experiment object <ex>. You should rewrite this
+% function to do whatever needs to be done to ready your experiment.
+%
+% Examples of things that should be done here:
+%
+% Create and initialize sub-objects:
+%   ex.presenter: presenter oject that represents TDT devices (for example)
+%   ex.responder: responder object that interacts with subjects via button
+%           box, command line, gui, etc
+%   ex.tracker: array of tracker objects responsible for choosing next
+%           trial parameters.
+%   ex.stim_templates: structure of stim objects, one per stimulus type in
+%           experiment. For example, if ex.params.intervals is 'ABX' then
+%           perhaps you want to define ex.stim_templates.A and
+%           ex.stim_templates.B...these will serve as the basis for
+%           stimulus generation on each trial.
+%
+% Initialize ex.trialdata: this is structure of arrays (each one-by-ntrials)
+%   which should include any stimulus or response parameter that changes from
+%   trial to trial. For the method of constant stimuli,
+%   you should fill ex.trialdata with stim params for all trials. For
+%   adaptive methods, ex.trialdata will grow over time as you add new
+%   trials.  For example, fields of ex.trialdata might include
+%   <level> if tracking stimulus level or <frequency> if roving frequency;
+%   also should include <response> for storing responses, and possibly
+%   <correct> or <tracker_number>, etc.
+
+% initialize subobjects
+ex = set(ex,'presenter',presenter);
+ex = set(ex,'responder',responder);
+
+% initialize stimulus template objects. One for each non-X interval label
+params = get(ex,'params');
+
+% This is kind of silly. If ex.params.intervals = 'AAXA' for example, make
+% a stim type 'A' only. For 'ABX' make 'A' and 'B'. This approach might work 
+% for you, but really you should do something to customize each, naming them 
+% whatever you like. Or you might just make stim_templates an array of stim 
+% access them by index rather than field. Or maybe just
+% set up one stim object in stim_templates and worry about
+% differentiating stim types (standard, probe, etc) by setting their param
+% values for each interval.
+
+if isfield(params,'intervals')
+    stimtypes = setdiff(unique(params.intervals),'X');
+    for iType = 1:length(stimtypes)
+        ex = set(ex,'stim_templates',stimtypes(iType),stim);
+    end
+else
+    ex = set(ex,'stim_templates',stim);
+end
+
+% initialize trialdata and tracks.
+% This is just an idea here, trying to make obvious
+% that initialization procedures will be method-dependent. Since your
+% experiment probably only uses one method, you probably won't need this
+% type of switch statement (or even to keep track of params.method).
+
+ex = set(ex,'tracker',tracker); 
+trialdata = [];
+
+
+if isfield(params,'method')
+    switch params.method
+        case 'mcs'
+            % compute number of trials
+            % fill trial data 
+            % (need to know which stimulus params are dependent variables,
+            % which are roved, etc).
+        case 'levitt'
+            % need to know which params are tracked
+            % trialdata should include an array indicating which tracker to
+            % update on each trial.
+        case 'max_likelihood'
+            % maximum likelihood procedure
+        case 'PEST'
+            % PEST procedure
+        case 'scatter_track'
+            % Erick's scatter-track procedure
+        otherwise
+    end
+else
+    % do something default? 
+end
+
+

@@ -1,0 +1,32 @@
+function p = pa5_display(p,atten_num,msg)
+% function p = pa5_display(p,atten_num,msg)
+%
+% Display message on PA5
+%
+% p: the presenter object
+% atten_num: which attenuator to use
+% msg: string to display (8 characters)
+%
+% By default, this function will set the display on PA5 devices.
+% In that case, <atten_num> refers to the order of devices added to the
+% presenter object (typically, PA5#1 is added first, etc.). 
+%
+% If <p> does not contain PA5 devices (for example, when running an RM2), 
+% then pa5_display calls fprintf to display on the command line. 
+%
+%
+% Examples:
+%   p = pa5_display(p,1,'Starting'); % display "Starting" on 1st pa5
+
+if ~isfield(p.devices,'PA5') | isempty(p.devices.PA5)
+    fprintf('%d: %s\\n',atten_num,msg);
+    return;
+end
+
+if length(p.devices.PA5) < atten_num
+    error('Requested attenuator number exceeds number of defined PA5 devices');
+end
+
+dev = p.devices.PA5(atten_num);
+%invoke(dev,'display','        ',0);
+invoke(dev,'display',msg,0);

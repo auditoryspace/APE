@@ -1,0 +1,141 @@
+function ex = set(ex,varargin)
+
+
+slotname = varargin{1};
+slotval = varargin{2};
+
+switch slotname
+    case 'params'
+        if nargin==3
+            ex.params = slotval;
+        else
+            for iparam = 2:2:length(varargin)
+                paramname = varargin{iparam};
+                paramval = varargin{iparam+1};
+                ex.params.(paramname) = paramval;
+            end
+        end
+        
+    case 'status'
+        if nargin == 3
+            ex.status = slotval;
+        else
+            for iparam = 2:2:length(varargin)
+                paramname = varargin{iparam};
+                paramval = varargin{iparam+1};
+                ex.status.(paramname) = paramval;
+            end
+        end
+        
+    case 'stimparams'
+        if nargin==3
+            ex.stimparams = slotval;
+        else
+            for iparam = 2:2:length(varargin)
+                paramname = varargin{iparam};
+                paramval = varargin{iparam+1};
+                ex.stimparams.(paramname) = paramval;
+            end
+        end
+    case 'presenter'
+        ex.presenter = slotval;
+    case 'responder'
+        ex.responder = slotval;
+        
+    case 'tracker'
+        if nargin == 3 % set all the trackers
+            ex.tracker = slotval;
+        else
+            trackNumber = varargin{2};
+            newTrack = varargin{3};
+            ex.tracker(trackNumber) = newTrack;
+        end
+       
+    case 'stim_templates'
+        if nargin == 3 % set all the templates w/ a fully prepared structure
+            ex.stim_templates = slotval;
+        else % set one or more templates directly
+            for iTemp = 2:2:length(varargin)
+                templateName = varargin{iTemp};
+                newTemplate = varargin{iTemp+1};
+                ex.stim_templates.(templateName) = newTemplate;
+            end
+        end
+        
+    case 'trial_stim'
+        if nargin == 3 % set all the stim
+            ex.trial_stim = slotval;
+        else % set the stim for a specific interval directly
+            intervalNumber = varargin{2};
+            newStim = varargin{3};
+            ex.trial_stim(intervalNumber) = newStim;
+        end
+            
+
+    case 'trialdata'
+        switch nargin
+            case 3
+                % setting trialdata field directly & in full
+                ex.trialdata = slotval;
+            case 5
+                % setting one field of one trial
+                trialnum = varargin{2};
+                paramname = varargin{3};
+                paramval = varargin{4};
+                ex.trialdata(trialnum).(paramname) = paramval;
+            case 4
+                for iparam = 2:2:length(varargin)
+                    paramname = varargin{iparam};
+                    paramval = varargin{iparam+1};
+                    if isnumeric(paramname)
+                        trialnum = paramname;
+                        % setting one trial of trialdata..paramval is a
+                        % trialdata structure
+                        ex.trialdata(trialnum) = paramval;
+            
+                    else
+                        % setting one of the trialdata fields
+                        
+                        % If sent a 1-by-ntrials (cell or other) array, then assign each
+                        % element to one of the trials. If sent a single
+                        % value, then assign it to every trial. If sent
+                        % something else, an error will likely occur
+                        if iscell(paramval)
+                            [ex.trialdata.(paramname)] = deal(paramval{:});
+                        else
+                            % need to use cell arrays for deal, so
+                            % convert first
+                            cellval = num2cell(paramval);
+                            [ex.trialdata.(paramname)] = deal(cellval{:});
+                        end
+                    end
+                end
+
+        end
+
+    case 'currentTrial'
+        ex = set(ex,'status','currentTrial',slotval);
+    case 'paused'
+        ex = set(ex,'status','paused',slotval);
+
+     case 'initFunc'
+        ex.initFunc = slotval;
+    case 'prepTrialFunc'
+        ex.prepTrialFunc = slotval;
+    case 'presentTrialFunc'
+        ex.presentTrialFunc = slotval;
+    case 'reportTrialFunc'
+        ex.reportTrialFunc = slotval;
+    case 'pauseFunc'
+        ex.pauseFunc = slotval;
+    case 'resumeFunc'
+        ex.resumeFunc = slotval;
+    case 'saveDataFunc'
+        ex.saveDataFunc = slotval;
+    case 'wrapupFunc'
+        ex.wrapupFunc = slotval;
+
+
+    otherwise
+        error(sprintf('invalid slotname: %s',slotname));
+end

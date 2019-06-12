@@ -1,0 +1,10 @@
+function s = goPresentFun(s,p,presentFunc)
+%function s = goPresentFunc(s,p,presentFunc)
+
+if nargin > 2
+    s.presentFunc = presentFunc;
+end
+
+s = feval(s.presentFunc,s,p);
+
+    

@@ -1,0 +1,26 @@
+function val = get(s,varargin)
+
+slotname = varargin{1};
+
+switch slotname
+    case 'tags'
+        if nargin == 2
+            val = s.tags;
+        else
+            tagname = varargin{2};
+            val = s.tags.(tagname);
+        end
+    case 'params'
+        if nargin == 2
+            val = s.params;
+        else
+    case 'synthFunc'
+        val = s.synthFunc;
+    case 'readyFunc'
+        val = s.readyFunc;
+    case 'presentFunc'
+        val = s.readyFunc;
+        
+    otherwise
+        error(sprintf('invalid slotname: %s',slotname));
+end

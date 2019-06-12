@@ -1,0 +1,72 @@
+function p = set_tag_val(p,partag,parval,varargin)
+% function p = set_tag_val(p,partag,parval)
+% function p = set_tag_val(p,partag,parval,'dev_type',dev_type,'dev_number',dev_number)
+% function p = set_tag_val(p,partag,parval,'offset',offset)
+%
+% Set a parameter tag running on an RP2, etc. 
+%
+% p: the presenter object
+% partag: the name of the tag to set (defined in RPVDS)
+% parval: the value to set the tag to
+%
+% additional arguments can be specified as <keyword,value> pairs:
+%
+% 'dev_type' 'dev_number': used to specify device type (e.g. 'RP2') and
+%   number. By default, set_tag_val will search for and use the first 
+%   matching parameter tag across devices (this works great for presenters
+%   with only one RP device, or where the RP devices run different circuits 
+%   with distinct tags. You must specify BOTH of these together.    
+% 'offset': for parvals longer than one element, specifies ofset for 
+%   writing into buffer with "writeTagV." The default offset is 0.
+%
+% Examples:
+%   p = set_tag_val(p,'ToneFreq',500);
+%   p = set_tag_val(p,'ToneAmp',2,'dev_type','RP2','dev_number',2); % set on the second RP2
+%   = = set_tag_val(p,'Sig_L',mysig,'offset',500) % 500-sample offset
+
+dev_type = [];
+dev_number = [];
+offset = 0;
+
+for iarg = 1:2:length(varargin)
+    keyword = varargin{iarg};
+    eval([keyword ' = varargin{iarg+1};']);
+end
+
+if isempty(dev_type)
+    % first find the device that defines this tag
+    foundit = 0;
+    dev_types = fieldnames(p.partags);
+    i_dev = 1;
+    dev_number = 1;
+
+    % start looking in the tags of the first device with tags. progress from
+    % there
+    while ~foundit
+        dev_type = dev_types{i_dev};  % RP2, RM2, etc.
+        if ismember(partag,p.partags.(dev_type){dev_number})
+            foundit = 1;
+        else
+            dev_number = dev_number+1;
+            if dev_number > length(p.partags.(dev_type))
+                i_dev = i_dev + 1;
+                if i_dev > length(dev_types)
+                    error(['Parameter tag ' '' partag '' ' not found.']);
+                end
+                dev_number = 1;
+            end
+        end
+    end
+end
+
+% now dev_type and dev_number specify the device implementing this tag
+dev = p.devices.(dev_type)(dev_number);
+if length(parval)==1
+    invoke(dev,'SetTagVal',partag,parval);
+else
+    if size(parval,2) == 1
+        parval = parval'; % force to row vector
+    end
+    invoke(dev,'WriteTagV',partag,offset,parval);
+end
+

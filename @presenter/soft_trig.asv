@@ -1,0 +1,35 @@
+function p = soft_trig(p,trig_num,varargin)
+% function p = soft_trig(p,trig_num,dev_type,dev_number)
+% function p = soft_trig(p,trig_num,dev_type,dev_number)
+%
+% Send a trigger to device
+%
+% p: presenter object
+% trig_num: number of softtrig to issue
+%
+% enter the following as <keyword,value> pairs
+% dev_type and dev_num: specify device type and number to trigger. Leave
+%   off for default behavior: trigger first device capable of receiving
+%   software triggers (i.e. RP2 not PA5)
+%
+% Examples: 
+% soft_trig(p,10); % send soft trigger 10 to first RP device
+% soft_trig(p,1,'dev_type','RX6','dev_number',2); % send to 2nd RX6
+
+dev_type = [];
+dev_number = [];
+
+for iarg = 1:2:length(varargin)
+    keyword = varargin{iarg};
+    eval([keyword ' = varargin{iarg+1};']);
+end
+
+if isempty(dev_type)
+    % first find the device that runs circuits
+    dev_types = fieldnames(p.circuit_files);
+    dev_type = dev_types{1};
+    dev_number = 1;
+end
+
+dev = p.devices.(dev_type)(dev_number);
+invoke(dev,'SoftTrg',trig_num);

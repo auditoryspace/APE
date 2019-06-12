@@ -1,0 +1,7 @@
+function tags = defaultSynthFunc(params)
+% function tags = defaultSynthFunc(params)
+%
+% default synthFunc for stim objects. synthFunc must take stim params
+% (s.par
+
+tags = params;
