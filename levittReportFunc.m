@@ -13,9 +13,14 @@ end
     reversal = get(t,'trialdata','reversal');
     correct = get(t,'trialdata','correct');
     currentvalue = get(t,'trialdata','currentvalue');
-
-    rev_vals = currentvalue(find(reversal));
-
+    
+    if isfield(params,'tracked_vars')
+        fn = fieldnames(params.tracked_vars);
+        rev_vals = [currentvalue(find(reversal)).(fn{1})];
+    else
+                rev_vals = currentvalue(find(reversal));
+    end
+    
 if length(rev_vals) < numrev
     val = nan;
 elseif params.logstep % use the geometric mean if we did log steps

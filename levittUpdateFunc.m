@@ -94,7 +94,14 @@ end
 curval = get(t,'trialdata',iTrial,'currentvalue');
 
 % default is to keep the current value
-newval = curval;
+
+if isfield(params,'tracked_vars')
+    fn = fieldnames(params.tracked_vars);
+    curvalstruct = curval;
+    curval = curval.(fn{1}); % turn it into a scalar for adjustment
+end
+    
+    newval = curval;
 
 if get(t,'trialdata',iTrial,'decrease')
     if params.logstep % use a logarithmic step
@@ -122,7 +129,31 @@ end
 % make newval a struct with matching fields (only one, presumably, is
 % defined). This will force behavior similar to MCS type trackers and
 % enable defaultExPrepTrialFunc to work in many cases.
-t = set(t,'trialdata',iTrial,'nextvalue',newval);
+if isfield(params,'tracked_vars')
+    fn = fieldnames(params.tracked_vars);
+    if length(fn) > 1
+        error('multiple tracked variables defined for levitt tracker');
+    else
+        newvalstruct = curvalstruct;
+        newvalstruct.(fn{1}) = newval;
+        newval = newvalstruct;
+%         newval = struct(fn{1},newval);
+    end
+
+% section below is commented out because fixed variables were instantiated
+% in the init func and should exist in curvalstruct. no need to put them in again here. 
+%     % fixed_vars lets multiple tracks handle different values of another
+%     % parameter (i.e. a non-tracked parameter)
+%     if isfield(params,'fixed_vars')
+%        fn = fieldnames(params.fixed_vars);
+%        for ifield = 1:length(fn)
+%            newval.fn{ifield} = params.fixed_vars.(fn{ifield});
+%        end
+%     end
+
+end
+
+t = set(t,'trialdata',iTrial,'nextvalue',newval); % newval may be a scalar or a struct
 
 t = set(t,'status',status);
 

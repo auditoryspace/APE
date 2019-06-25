@@ -7,6 +7,13 @@ reversal = get(t,'trialdata','reversal');
 correct = get(t,'trialdata','correct');
 currentvalue = get(t,'trialdata','currentvalue');
 
+params = get(t,'params');
+if isfield(params,'tracked_vars')
+    fn = fieldnames(params.tracked_vars);
+    currentvalue = [currentvalue.(fn{1})];
+end
+        
+
 
 irev = find(reversal);
 icor = find(correct);
