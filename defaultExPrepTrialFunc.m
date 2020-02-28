@@ -130,6 +130,19 @@ for i = 1:length(trial_intervals)
             trial_stim(i) = set(trial_stim(i),'params',rovefields{iField},thisrove(i)); 
         end
     end
+    
+    % CS 02/27/2020 ... need non-target intervals to have the same fixed
+    % (non tracked) values as the target. This matters only for interleaved
+    % trackers with different fixed values
+    tp = get(t,'params');
+    if isfield(tp,'fixed_vars') && ~isempty(tp.fixed_vars)
+        names = fieldnames(tp.fixed_vars);
+        for iname = 1:length(names) % make stim vals match newval vals
+            trial_stim(i) = set(trial_stim(i),'params',names{iname},tp.fixed_vars.(names{iname}));
+        end
+        
+    end
+    
 
     if i == targint
         % do something here to differentiate the target...presumably, this
