@@ -110,37 +110,50 @@ switch plot_type
             mylens(i) = length(getfield(tracked_vars,varnames{i}));
         end
         [foo isort] = sort(mylens,'descend');
+                    
+        % CS 9/28/2020 modified to handle the case where we only have one MCS
+        % dimension (might be common if we are measuring simple
+        % psychometrics)
         
-        if nargin == 1 % case added 10/2/2018. Why missing?
-            % the  longest should be the x-axis of our plot
-            i_plotX = isort(1);
-            % the second longest should be the parameters
-            i_plotparam = isort(2);
-        
-        elseif nargin > 2 && strcmp(varargin{1},'flip')
+        if length(isort) == 1
+            i_plotX = 1;
+            i_plotparam = [];
+        else
             
-            % the second longest should be the x-axis of our plot
-            i_plotX = isort(2);
-            % the longest should be the parameters
-            i_plotparam = isort(1);
-        else  % maybe we were given the tracked_vars to plot against.
-           i_plotX = []; i_plotparam = [];
-            
-           if nargin > 2
-               i_plotX = find(strcmp(varargin{1},fieldnames(tracked_vars)));
-               
-               if nargin > 3
-                   i_plotparam = find(strcmp(varargin{2},fieldnames(tracked_vars)));
-               end
-           end
-           
-            if isempty(i_plotX)
-                % the longest should be the x-axis of our plot
+            if nargin == 1 % case added 10/2/2018. Why missing?
+                % the  longest should be the x-axis of our plot
                 i_plotX = isort(1);
-            end
-            if isempty(i_plotparam)
+                
+                
                 % the second longest should be the parameters
                 i_plotparam = isort(2);
+                
+                
+            elseif nargin > 2 && strcmp(varargin{1},'flip')
+                
+                % the second longest should be the x-axis of our plot
+                i_plotX = isort(2);
+                % the longest should be the parameters
+                i_plotparam = isort(1);
+            else  % maybe we were given the tracked_vars to plot against.
+                i_plotX = []; i_plotparam = [];
+                
+                if nargin > 2
+                    i_plotX = find(strcmp(varargin{1},fieldnames(tracked_vars)));
+                    
+                    if nargin > 3
+                        i_plotparam = find(strcmp(varargin{2},fieldnames(tracked_vars)));
+                    end
+                end
+                
+                if isempty(i_plotX)
+                    % the longest should be the x-axis of our plot
+                    i_plotX = isort(1);
+                end
+                if isempty(i_plotparam)
+                    % the second longest should be the parameters
+                    i_plotparam = isort(2);
+                end
             end
         end
         
@@ -149,9 +162,15 @@ switch plot_type
         ind_vars = ind_vars(1:length(correct)); % only plot the trials we have run.
         ind_vals = tracked_vars.(varnames{i_plotX});
         
-        param_vars = get(t,'trialdata',varnames{i_plotparam});
-        param_vars = param_vars(1:length(correct));
-        param_vals = tracked_vars.(varnames{i_plotparam});
+        if isempty(i_plotparam)
+            param_vars = ones(length(get(t,'trialdata')),1);
+            param_vars = param_vars(1:length(correct));
+            param_vals = 1;
+        else
+            param_vars = get(t,'trialdata',varnames{i_plotparam});
+            param_vars = param_vars(1:length(correct));
+            param_vals = tracked_vars.(varnames{i_plotparam});
+        end
         
         pc = nan(length(ind_vals),length(param_vals));
         sd = nan(length(ind_vals),length(param_vals));

@@ -34,16 +34,27 @@ varnames = fieldnames(tracked_vars);
         % the longest should be the x-axis of our plot
         i_plotX = isort(1);
         % the second longest should be the parameters
-        i_plotparam = isort(2);
-         
+        % updated CS 9/28/2020 to handle case with only one tracked
+        % parameter
+        if length(isort) == 1
+            i_plotparam = [];
+        else
+            i_plotparam = isort(2);
+        end
         correct = get(t,'trialdata','correct');
         ind_vars = get(t,'trialdata',varnames{i_plotX});
         ind_vars = ind_vars(1:length(correct)); % only plot the trials we have run.
         ind_vals = tracked_vars.(varnames{i_plotX});
         
-        param_vars = get(t,'trialdata',varnames{i_plotparam});
-        param_vars = param_vars(1:length(correct));
-        param_vals = tracked_vars.(varnames{i_plotparam});
+        if isempty(i_plotparam)
+            param_vars = ones(length(get(t,'trialdata')),1);
+            param_vars = param_vars(1:length(correct));
+            param_vals = 1;
+        else
+            param_vars = get(t,'trialdata',varnames{i_plotparam});
+            param_vars = param_vars(1:length(correct));
+            param_vals = tracked_vars.(varnames{i_plotparam});
+        end
         
         pc = nan(length(ind_vals),length(param_vals));
         sd = nan(length(ind_vals),length(param_vals));
