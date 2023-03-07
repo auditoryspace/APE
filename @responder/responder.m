@@ -9,6 +9,38 @@ function r = responder(varargin)
 % central experiment control program is similar to that of the stim object.
 % Both stim and responder define functions that map from experimental
 % parameters (visible to the control program) to specific presenter tags.
+%
+% In APE, subclass functionality is implemented by replacing various
+% function handles stored as object slots, typically these are: 
+%   prepResponseFunc      % prepares the response (reset/redraw/etc)
+%   getResponseFunc      % records and returns the response data
+%   presentFeedbackFunc  % presents feedback (colors buttons, lights LEDs)
+%   waitForSubjectFunc   % basic response, waiting to begin trial
+%   tellDoneFunc         % communicate end of run to participant
+%
+% The above functions are not called directly from an experiment program,
+% instead they are invoked in the form
+% r = goGetResponse(r,arg1,arg2,...,argN); 
+% which passes the relevant arguments (argX) to the corresponding function. 
+% This way, experiments can be written abstractly, and swapping in a new
+% responder (e.g. exchanging hardware button box with a GUI) is trivial. 
+%
+% Collections of these functions appropriate for different types of
+% responder objects have already been implemented. Call this constructor
+% function with argument 'type' to set up automatically, e.g.:
+% r = responder('type','gui2');
+%
+% Available types:
+%   commandLine
+%   rbox          % old TDT rbox
+%   ardbox        % arduino hardware USB interface to TDT rbox
+%   gui           % gui buttons on a window
+%   gui2          % gui buttons on a window, improved
+%   touchLine     % gui window recording touches on a screen w/ graphics
+%   touchPath     % gui window recording drags on a screen w/ graphics
+%   knobBoxA      % old SPACElab analog knob box
+%   headtrack     % old SPACElab Polhemus headtrack response
+
 
 switch nargin
     case 0 % create an empty responder object
@@ -86,7 +118,7 @@ switch type
         r.presentFeedbackFunc = @touchlinePresentFeedbackFunc; % func to present feedback
         r.waitForSubjectFunc = @touchlineWaitForSubjectFunc; % wait to start
         r.tellDoneFunc = @touchlineTellDoneFunc; % tell them we're done
-    case 'touchpath'
+    case {'touchpath' 'touchPath'}
         r.prepResponseFunc = @touchpathPrepResponseFunc; % prepare to read response
         r.getResponseFunc = @touchpathGetResponseFunc; % function to get a response 
         r.presentFeedbackFunc = @touchpathPresentFeedbackFunc; % func to present feedback
@@ -94,7 +126,7 @@ switch type
         r.tellDoneFunc = @touchpathTellDoneFunc; % tell them we're done
     case 'knobBoxA'
         r.waitForSubjectFunc = @knobBoxAWaitForSubjectFunc;
-    case 'headtrack'
+    case {'headtrack' 'headTrack'}
         r.prepResponseFunc = @headtrackPrepResponseFunc; % prepare to read response
         r.getResponseFunc = @headtrackGetResponseFunc; % function to get a response 
  %       r.presentFeedbackFunc = @rboxPresentFeedbackFunc; % func to present feedback
