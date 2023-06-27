@@ -31,11 +31,13 @@ for iInterval = 1:length(trial_stim)
         % the next step is to actually present the stim, but first wait for
         % the isi to finish
         while toc < params.isi % wait for ISI to finish
+            drawnow;
         end
         
         % do it!
         goPresent(trial_stim(iInterval),p); % tell TDT to go
-        
+
+%         pause(params.isi);
         % reset the isi timer
         tic;
         
@@ -45,6 +47,5 @@ for iInterval = 1:length(trial_stim)
             drawnow;
         end
         pause(0.01); % extra pause because timing doesn't work as it should?
-
 end
     

@@ -40,7 +40,8 @@ function r = responder(varargin)
 %   touchPath     % gui window recording drags on a screen w/ graphics
 %   knobBoxA      % old SPACElab analog knob box
 %   headtrack     % old SPACElab Polhemus headtrack response
-
+%
+% (c) 2008-2023 G. Christopher Stecker for Auditory Space, LLC
 
 switch nargin
     case 0 % create an empty responder object
@@ -132,6 +133,11 @@ switch type
  %       r.presentFeedbackFunc = @rboxPresentFeedbackFunc; % func to present feedback
         r.waitForSubjectFunc = @headtrackWaitForSubjectFunc; % wait to start
         r.tellDoneFunc = @headtrackTellDoneFunc; % tell them we're done
+    case 'BussSR'
+        r.prepResponseFunc = @BussSRPrepResponseFunc;
+        r.getResponseFunc = @BussSRGetResponseFunc;
+        r.waitForSubjectFunc = @BussSRWaitForSubjectFunc;
+        r.tellDoneFunc = @BussSRTellDoneFunc; % tell them we're done
 
 end
         

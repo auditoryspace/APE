@@ -40,11 +40,11 @@ t = set(t,'trialdata',curtrial,td);
 
 %% update confusion matrix
 s = get(t,'status');
-if isfield(s,'confusion') & ~mod(target,1) & ~mod(response,1)
+if isfield(s,'confusion') && ~mod(target,1) && ~mod(response,1)
     cm = s.confusion;
     % check for undersized confusion matrix (means we haven't seen this combo
     % before).
-    if size(cm,1) < target | size(cm,2) < response
+    if size(cm,1) < target || size(cm,2) < response
         cm(target,response) = 0;
     end
     cm(target,response) = cm(target,response)+1;

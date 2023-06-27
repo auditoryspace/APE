@@ -40,6 +40,8 @@ switch dev_type
         switch trig_num
             case 1 % play a sound
                 mysig = [get_tag_val(p,'SigL'); get_tag_val(p,'SigR')];
+%                         c = clock; fprintf('%02d:%.05g\n',c(5),c(6));
+
                 sound(mysig',p.samprate.(dev_type)(dev_number));
                 
             otherwise % just ignore it.
