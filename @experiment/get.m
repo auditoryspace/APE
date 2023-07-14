@@ -26,7 +26,12 @@ switch slotname
             val = ex.stimparams.(paramname);
         end
     case 'presenter'
+        if nargin == 2
         val = ex.presenter;
+        else
+            pNumber = varargin{2};
+            val = ex.presenter(pNumber);
+        end
     case 'responder'
         val = ex.responder;
     case 'tracker'

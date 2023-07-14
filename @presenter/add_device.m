@@ -126,9 +126,79 @@ switch dev_type
             'Blocking',args.blocking));
        
     case {'PsychPortAudio'}
-        % not implemented yet, but this would be a more general version of
-        % the Dante interface. Could be used in place of localaudio for 2-channel stuff. 
+        % this would be a more general version of the Dante interface. 
+        % Could be used in place of localaudio for 2-channel stuff. 
         % Any advantages to that? 
+    
+        args = dev_interface;
+        
+        if ~isfield(args,'recchans')
+            args.recchans = []; args.recsamps = 0;
+        end
+        
+        if isempty(dev_samprate)
+            dev_samprate = 48000;
+        end
+        
+        % same hack as for localaudio, above
+        % we'll use a uicontrol for the local dev. Then we can store stuff
+        % (audio) in the uicontrol's userdata field. 
+        dev = uicontrol('position',[0 0 1 1],'visible','off');
+        success = 1;
+        p.samprate.(dev_type)(dev_number) = dev_samprate;                
+        p.circuit_files.(dev_type){dev_number} = 'PsychPortAudio';
+
+        % note difference here. Tags are called PBsig, not separate tags for SigL and SigR
+        p.partags.(dev_type){dev_number} = {'NumTotalChans' 'PBChans' 'PBSamps' 'PBSig' 'RecChans' 'RecSamps' 'RecSig' 'Blocking'};
+        
+        
+        d = PsychPortAudio('GetDevices');
+        %i = strmatch('Aggregate Device',{d.DeviceName}); nchan = 4; % multiple sound cards aggregated in MacOS
+        i = strmatch(args.devicename,{d.DeviceName}); % 2 channels? of output on local audio?
+        if isempty(i)
+            i = strmatch('Built-in Output',{d.DeviceName}); % 2 channels? of output on local audio?
+        end
+        
+        DevID = d(i).DeviceIndex;
+       
+        % open device with 4 channels at 48000
+        fprintf('Opening %s device %d (%s), using %d of %d output channels and %d of %d input channels\n',d(i).HostAudioAPIName,DevID,d(i).DeviceName,...
+            args.numtotalchans,d(i).NrOutputChannels,length(args.recchans),d(i).NrInputChannels);
+        
+        % PsychPortAudio('Open',<devid>,<mode>,<reqlatencyclass>,<samprate>,<channels>,<buffersize>,<suggestedlatency>,<selectchans>,<specialflags>)
+        % mode 1 = playback only, 2 = record, 3 = both
+        % reqlatenyclass: 0 don't care; 1 try for low but stay reliable; 2 take
+        %   sound card; 3 same as 2 but more aggressive; 4 fail if device can't
+        %   meet requirements
+        
+        if length(args.recchans) > 0
+            % simultaneous playback and record
+            ph = PsychPortAudio('Open',DevID,3,1,48000,[args.numtotalchans length(args.recchans)],[],0.015); % 0.015 for latency necessary to keep it rolling
+            
+            % create a dummy / silent signal and load into the playback buffer:
+            silentsig = zeros(args.numtotalchans,args.recsamps); % match the rec buffer length for now...?
+            PsychPortAudio('FillBuffer',ph,silentsig);
+            % read the rec buffer for the very first time. This initializes it.
+            PsychPortAudio('GetAudioData', ph, args.recsamps, 2, 2);  % XXX the 2 and 2 should be args.recsamps I think?
+        else
+            % playback only
+            ph = PsychPortAudio('Open',DevID,1,1,48000,[args.numtotalchans],[],0.015); % 0.015 for latency necessary to keep it rolling
+            
+        end
+        
+        % store the handle and the tag data to the UIcontrol
+
+            
+        set(dev,'UserData',struct('PsychPortAudioDevice',ph,...
+            'NumTotalChans',args.numtotalchans,...
+            'PBChans',args.pbchans,...
+            'PBSamps',[],...
+            'PBSig',[],...
+            'RecChans',args.recchans,...
+            'RecSamps',args.recsamps,...
+            'RecSig',[],...
+            'Blocking',args.blocking));
+ 
         
     case {'ZBUS'} % add the zBus device
         dev = actxcontrol('zBUS.x',[0 0 0 0]);
