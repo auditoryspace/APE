@@ -40,6 +40,7 @@ function r = responder(varargin)
 %   touchPath     % gui window recording drags on a screen w/ graphics
 %   knobBoxA      % old SPACElab analog knob box
 %   headtrack     % old SPACElab Polhemus headtrack response
+%   BussSR        % Emily Buss' Sentence Response interface
 %
 % (c) 2008-2023 G. Christopher Stecker for Auditory Space, LLC
 

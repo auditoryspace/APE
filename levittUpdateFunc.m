@@ -10,6 +10,7 @@ function t = levittUpdateFunc(t,iTrial,response,target)
 % nup = 1;
 % start = 100;
 % step = [5 2];
+% logstep = 0; % steps are log10 of ratios
 % stepreversals = [4 6];
 % avglastreversals = 6;
 %
@@ -36,6 +37,7 @@ if isempty(iTrial)
     iTrial = length(get(t,'trialdata','currentvalue')); % update trial at the end
 end
 
+
 % update the tracker
 t = set(t,'trialdata',iTrial,'response',response);
 t = set(t,'trialdata',iTrial,'target',target);
@@ -47,7 +49,7 @@ t = set(t,'trialdata',iTrial,'reversal',0);
 t = set(t,'trialdata',iTrial,'increase',0);
 t = set(t,'trialdata',iTrial,'decrease',0);
 
-% decide whether to change. 
+% decide whether to change.
 if get(t,'trialdata',iTrial,'correct') % RIGHT
     status.nwrong = 0;
     status.ncorrect = status.ncorrect + 1;
@@ -90,6 +92,15 @@ if get(t,'trialdata',iTrial,'reversal')
     end
 end
 
+% CS 08/01/23 - do we need to keep this in status, or just count trialdata?
+status.currentTrial = iTrial;
+
+% if maxtrials is specified, check and quit if we've reached it
+if isfield(params,'maxtrials') && iTrial >= params.maxtrials
+    status.done = 1;
+end
+
+
 % compute the next value
 curval = get(t,'trialdata',iTrial,'currentvalue');
 
@@ -100,20 +111,20 @@ if isfield(params,'tracked_vars')
     curvalstruct = curval;
     curval = curval.(fn{1}); % turn it into a scalar for adjustment
 end
-    
-    newval = curval;
+
+newval = curval;
 
 if get(t,'trialdata',iTrial,'decrease')
     if params.logstep % use a logarithmic step
-        newval = curval * 10^(-status.step); 
+        newval = curval * 10^(-status.step);
     else % use a linear step
-    newval = curval - status.step;
+        newval = curval - status.step;
     end
 elseif get(t,'trialdata',iTrial,'increase')
-    if params.logstep % use a logarithmic step 
-        newval = curval * 10^(status.step); 
+    if params.logstep % use a logarithmic step
+        newval = curval * 10^(status.step);
     else % use a linear step
-    newval = curval + status.step;
+        newval = curval + status.step;
     end
 end
 
@@ -137,20 +148,20 @@ if isfield(params,'tracked_vars')
         newvalstruct = curvalstruct;
         newvalstruct.(fn{1}) = newval;
         newval = newvalstruct;
-%         newval = struct(fn{1},newval);
+        %         newval = struct(fn{1},newval);
     end
-
-% section below is commented out because fixed variables were instantiated
-% in the init func and should exist in curvalstruct. no need to put them in again here. 
-%     % fixed_vars lets multiple tracks handle different values of another
-%     % parameter (i.e. a non-tracked parameter)
-%     if isfield(params,'fixed_vars')
-%        fn = fieldnames(params.fixed_vars);
-%        for ifield = 1:length(fn)
-%            newval.fn{ifield} = params.fixed_vars.(fn{ifield});
-%        end
-%     end
-
+    
+    % section below is commented out because fixed variables were instantiated
+    % in the init func and should exist in curvalstruct. no need to put them in again here.
+    %     % fixed_vars lets multiple tracks handle different values of another
+    %     % parameter (i.e. a non-tracked parameter)
+    %     if isfield(params,'fixed_vars')
+    %        fn = fieldnames(params.fixed_vars);
+    %        for ifield = 1:length(fn)
+    %            newval.fn{ifield} = params.fixed_vars.(fn{ifield});
+    %        end
+    %     end
+    
 end
 
 t = set(t,'trialdata',iTrial,'nextvalue',newval); % newval may be a scalar or a struct

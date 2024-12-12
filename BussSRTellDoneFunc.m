@@ -177,7 +177,7 @@ close(HANDLES.f);
                 case 'clear'
                     set(get(h(1),'Parent'),'Tag','');                   % remove prev resp
                 case 'done'
-                    fprintf('Starting...\n');
+                    fprintf('Closing...\n');
                     TagStr = get(get(h(1),'Parent'),'Tag');
                     TagStr = [TagStr,'DONE'];                           % indicate resp complete
                     set(get(h(1),'Parent'),'UserData',TagStr); % push tag into userdate so APE knows response is ready

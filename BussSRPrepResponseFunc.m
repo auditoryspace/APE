@@ -23,7 +23,7 @@ function r = BussSRPrepResponseFunc(r,tokenInfo,pos,nocursor)
 %     Sentence: 'He dreamed of being in a rock band'
 %       Label: 'List1, sentence1'
 %    NumWords: 8
-%         key: [1 1 0 1 1 0 1 1]
+%    KeyWords: [1 1 0 1 1 0 1 1]
 %       Words: {'He' 
 %               'dreamed'
 %               'of'
@@ -33,12 +33,15 @@ function r = BussSRPrepResponseFunc(r,tokenInfo,pos,nocursor)
 %               'rock'
 %               'band'}
 %
+% Label, if empty, defaults to 'unknown'
+%
 % Note that if tokenInfo does not contain the field 'Words', it will be
 % computed from 'Sentence', using spaces as delimiters and assigning one
 % cell element to each intervening word. 
 %
-% Similarly is tokenInfo does not contain the field 'KeyWords', it will be
-% generated treating all words as key words (e.g., [1 1 1 1 1]).
+% NumWords, if empty, defaults to length of Words
+%
+% KeyWords, if empty, defaults to  treating all words as key words (e.g., [1 1 1 1 1]).
 %
 % Response data are based on the number of key words correctly and
 % incorrectly identified.
@@ -65,6 +68,10 @@ if nargin<3 || isempty(pos)
     pos = [];
 end
 
+if ischar(tokenInfo)
+    tokenInfo = struct('Sentence',tokenInfo);
+end
+
 ThisWord = 'dummy';         % initialize
 
 % compute Words list from Sentence if necessary
@@ -73,9 +80,18 @@ if ~isfield(tokenInfo,'Words')
     tokenInfo.Words = foo{1};
 end
 
+if ~isfield(tokenInfo,'NumWords')
+    tokenInfo.NumWords = length(tokenInfo.Words);
+end
+
+if ~isfield(tokenInfo,'Label')
+    tokenInfo.Label = 'unknown';
+end
+
+
 AllWords = 1:tokenInfo.NumWords;
 if ~isfield(tokenInfo,'KeyWords') || isempty(tokenInfo.KeyWords)
-    tokenInfo.KeyWords = ones(1,tokenInfo.Numwords);
+    tokenInfo.KeyWords = ones(1,tokenInfo.NumWords);
 end
 
 keyWords = AllWords(tokenInfo.KeyWords==1);
@@ -88,7 +104,11 @@ end
 
 
 %% create the figure  
+try
 IDString = sprintf('BussSR: %s',tokenInfo.Label); % note Emily's had SNR and trial number in response GUI also
+catch 
+    IDString = sprintf('BussSR: %s',tokenInfo.Label{1}); % note Emily's had SNR and trial number in response GUI also
+end
 
 % have a default color for the figure. 
 respParams = get(r,'params');

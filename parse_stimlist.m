@@ -1,4 +1,5 @@
 function [stimParams headParams] = parse_stimlist(fname,evalFlag)
+%function [stimParams headParams] = parse_stimlist(fname,evalFlag)
 %
 % read an APE 'stimlist' file. Such files are tab-delimited text with 
 % the following structure:
@@ -36,8 +37,20 @@ function [stimParams headParams] = parse_stimlist(fname,evalFlag)
 % By default, parse_stimlist attempts to convert strings to numeric values. 
 % Set evalFlag to 0 to prevent numeric conversion of strings in your file.  
 % 
-% Author: Chris Stecker (c) 2023 Auditory Space, LLC. 
+% Author: Chris Stecker (c) 2023-2024 Auditory Space, LLC. 
 % 
+
+% % convert . and .. to absolute paths
+% if fname(1) == '.'
+%     if fname(2) == '.'
+%         cwd = pwd;
+%         cd ..;
+%              fname = [pwd fname(3:end)];
+%         cd(cwd);
+%     else
+%              fname = [pwd fname(3:end)];
+%     end
+% end
 
 if ~exist(fname)
     error(sprintf('File not found on path: %s',fname));
@@ -48,9 +61,11 @@ if nargin < 2 || isempty(evalFlag)
     evalFlag = 1;
 end
 
+noEval = {'Label' 'Path' 'File' 'Sentence'}; % in no case try to parse these as numbers
+
 
 fid = fopen(fname,'r');
-inHead = 0;
+inHead = 1;
 inBody = 0;
 headParams = struct;
 stimParams = struct;
@@ -105,7 +120,7 @@ iStim = 0;
 
 while inBody
     theLine = fgetl(fid);
-    if isnumeric(theLine) && theLine == -1 % EOF
+    if isempty(theLine) || (isnumeric(theLine) && theLine == -1) % EOF
         inBody = 0;
         continue;
     else   
@@ -113,15 +128,31 @@ while inBody
         foo = textscan(theLine,'%s','delimiter','\t'); % get all the values
 %         paramVals = foo{1};
         for i = 1:length(paramFields)
-            if evalFlag
+            if evalFlag && ~ismember(paramFields{i},noEval)
                 [paramVals{i}, ok] = str2num(foo{1}{i});
                 if ~ok
                     paramVals{i} = foo{1}{i};
+                    % CS 9/27/2024 - include header parameters in the
+                    % sentence info, but allow each sentence to override by
+                    % including the same Param name as a column. The entry
+                    % '-' is special and means to use the value from <head>
+                    if strcmp(paramVals{i},'-')
+                        try
+                            paramVals{i} = headParams.(paramFields{i});
+                        end
+                    end
                 end
             else
                 paramVals{i} = foo{1}{i};
+
+                % same as above. Handle the '-' option
+                if strcmp(paramVals{i},'-')
+                    try
+                        paramVals{i} = headParams.(paramFields{i});
+                    end
+                end
             end
-            
+
             stimParams(iStim).(paramFields{i}) = paramVals{i}; % add values to the param struct
         end
     end

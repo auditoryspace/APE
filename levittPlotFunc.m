@@ -32,8 +32,10 @@ hp = plot(1:length(currentvalue),currentvalue,'k-',...
     [1 length(currentvalue)],[1 1]*mythresh,'k--');
 
 if checkDone(t)
+    try
     symbolcolor = [.7 .7 .7];
     set(hp(5),'LineStyle','-','LineWidth',2);
+    end
 else
     symbolcolor = 'k';
 end

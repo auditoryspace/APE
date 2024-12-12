@@ -56,7 +56,7 @@ switch plot_type
                 % the longest should be the x-axis of our plot
                 i_plotX = isort(1);
             end
-            if isempty(i_plotparam)
+            if isempty(i_plotparam) && length(isort)>1
                 % the second longest should be the parameters
                 i_plotparam = isort(2);
             end

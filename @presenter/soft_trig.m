@@ -48,6 +48,20 @@ switch dev_type
                 
                 %             error(sprintf('%d is an invalid trigger number for local audio device',trig_num));
         end
+
+    case {'local_audio2024'}
+        % send the trigger to local audio? what would this mean?
+        % play a sound on trigger 1
+        switch trig_num
+            case 1 % play a sound
+                mysig = get_tag_val(p,'PBSig'); 
+                sound(mysig',p.samprate.(dev_type)(dev_number));
+
+            otherwise % just ignore it.
+
+                %             error(sprintf('%d is an invalid trigger number for local audio device',trig_num));
+        end
+
     case {'Dante' 'PsychPortAudio'}
         % send the trigger to local audio? what would this mean?
         

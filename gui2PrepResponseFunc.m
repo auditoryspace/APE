@@ -1,5 +1,5 @@
-function r = gui2PrepResponseFunc(r,numbuttons,pos,nocursor,buttontitles,buttonpos)
-%function r = gui2PrepResponseFunc(r,numbuttons,pos,nocursor,buttontitles,buttonpos)
+function r = gui2PrepResponseFunc(r,numbuttons,pos,nocursor,buttontitles,buttonpos,quiet)
+%function r = gui2PrepResponseFunc(r,numbuttons,pos,nocursor,buttontitles,buttonpos,quiet)
 %
 % The default prepResponseFunction does nothing. This one simply sets up
 % the response figure and buttons if not already in existence. It takes the
@@ -30,6 +30,12 @@ function r = gui2PrepResponseFunc(r,numbuttons,pos,nocursor,buttontitles,buttonp
 % default values for pos, nocursor, buttontitles, and buttonpos can also
 %   be maintained by setting the argument to empty ([])...in order to
 %   access parameters later in the arglist. 
+%
+% CS 8/3/2023 - quiet option, set to 1 to suppressed "clicked button x" message
+
+if nargin < 7
+    quiet = 0;
+end
 
 if nargin<6
     buttonpos = {};
@@ -94,6 +100,10 @@ if ~isfield(respParams,'guibuttons') | length(respParams.guibuttons) ~= numbutto
             'fontunits','normalized','fontsize',0.8,...
             'tag',num2str(i),'string',num2str(i));
         
+        if quiet
+            u(i).Callback = @clickmequietly;
+        end
+        
         if ~isempty(buttonpos) && length(buttonpos)==numbuttons
             set(u(i),'position',buttonpos{i});
         else
@@ -125,4 +135,15 @@ rt = toc; % measure reaction time
 mydata.button = str2num(get(gcbo,'tag')); % figure out what button was pressed
 mydata.reactiontime = rt;
 fprintf('clicked button %d after %.3f seconds\n',mydata.button,mydata.reactiontime)
+set(get(gcbo,'Parent'),'UserData',mydata); % store the data in the GUI figure
+
+%%% ------------------------------------------------------------------
+%%% clickmequietly - the button callback
+%%% ------------------------------------------------------------------
+function mydata = clickmequietly(varargin)
+
+rt = toc; % measure reaction time
+mydata.button = str2num(get(gcbo,'tag')); % figure out what button was pressed
+mydata.reactiontime = rt;
+% fprintf('clicked button %d after %.3f seconds\n',mydata.button,mydata.reactiontime)
 set(get(gcbo,'Parent'),'UserData',mydata); % store the data in the GUI figure

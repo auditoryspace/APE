@@ -13,6 +13,9 @@ if nargin == 1
     msgplacement = {.5 .8 48 'r'};  % x y fontsize color
 end
 
+%make figure current
+figure(get(r,'params','guifig'));
+
 oldfunc = get(gcf,'WindowButtonDownFcn');
 oldud = get(gcf,'userdata');
 set(gcf,'WindowButtonDownFcn',@getclick,'userdata',0);

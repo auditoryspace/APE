@@ -8,11 +8,15 @@ function t = levittInitFunc(t,varargin)
 %   ndown
 % start
 % step
+% logstep [= 0]; % flag that steps are log10 of ratios
 % stepreversals
 % avgreversals
 % floor
 % ceiling
 % 
+% maxtrials - optional, but if included track will end after maxtrials trials 
+%       or all reversals are counted, whichever comes first
+%
 % optionally include t.params.tracked_vars, a struct similar to MCS trackers
 %     it should have only one field, named for the tracked variable
 %    
@@ -33,8 +37,13 @@ function t = levittInitFunc(t,varargin)
 % load in the tracker parameters
 params = get(t,'params');
 
+if ~isfield(params,'maxtrials')
+    params.maxtrials = Inf;
+    t = set(t,'params',params);
+end
+
 % initialize the tracker status
-status = struct('totalreversals',0,'numreversals',0,'ncorrect',0,'nwrong',0,'goingup',0,'goingdown',0);
+status = struct('totalreversals',0,'numreversals',0,'currentTrial',1,'ncorrect',0,'nwrong',0,'goingup',0,'goingdown',0);
 status.steps = params.step;
 status.step = status.steps(1);
 status.stepreversals = params.stepreversals;

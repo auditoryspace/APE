@@ -48,7 +48,7 @@ else
 end
 
 switch dev_type
-    case {'local_audio'} % add a device for local audio
+    case {'local_audio' 'local_audio2024'} % add a device for local audio
         if isempty(dev_samprate)
             dev_samprate = 48000; % changed from 44100 (CS 2/4/2016)
         end
@@ -62,9 +62,28 @@ switch dev_type
         p.samprate.(dev_type)(dev_number) = dev_samprate;                
         p.circuit_files.(dev_type){dev_number} = 'local_audio';
 
-        p.partags.(dev_type){dev_number} = {'SigSamps' 'SigL' 'SigR'};
         
-        set(dev,'UserData',struct('SigSamps',[],'SigL',[],'SigR',[]));
+        switch dev_type
+            case 'local_audio'
+                % original version
+                p.partags.(dev_type){dev_number} = {'SigSamps' 'SigL' 'SigR'};
+                set(dev,'UserData',struct('SigSamps',[],'SigL',[],'SigR',[]));
+            case 'local_audio2024'
+
+
+                % 2024 version. Make the device match the tag setup used
+                % for PsychPortAudio
+                p.partags.(dev_type){dev_number} = {'NumTotalChans' 'PBChans' 'PBSamps' 'PBSig' 'RecChans' 'RecSamps' 'RecSig' 'Blocking'};
+                set(dev,'UserData',struct('PsychPortAudioDevice',[],...
+                    'NumTotalChans',2,...
+                    'PBChans',[1 2],...
+                    'PBSamps',[],...
+                    'PBSig',[],...
+                    'RecChans',[],...
+                    'RecSamps',0,...
+                    'RecSig',[],...
+                    'Blocking',1));
+        end
         
     case {'Dante'} % add a (probably multichannel) Dante device (audio over ethernet)
         args = dev_interface; 
@@ -131,6 +150,24 @@ switch dev_type
         % Any advantages to that? 
     
         args = dev_interface;
+
+        % CS 03/20/2024 - add a parser to allow more information about the
+        % PPA device to come in, not just the name. Use special chars <>()
+        %
+        % Format: 'Device Name <ID> (API Name)'  
+        % Example: 'Chris Stecker’s iPhone Microphone <0> (Core Audio)'
+
+        
+        if strfind(args.devicename,'<')
+            % parse it
+            ad = args.devicename;
+            i1 = strfind(ad,'<');
+            i2 = strfind(ad,'>');
+            args.devicename = ad(1:(i1-2)); % before <>
+            args.deviceindex = str2num(ad((i1+1):(i2-1))); % inside <>
+            args.API = ad((i2+3):(end-1)); % remove parents
+        end
+            
         
         if ~isfield(args,'recchans')
             args.recchans = []; args.recsamps = 0;
@@ -144,22 +181,50 @@ switch dev_type
         % we'll use a uicontrol for the local dev. Then we can store stuff
         % (audio) in the uicontrol's userdata field. 
         dev = uicontrol('position',[0 0 1 1],'visible','off');
-        success = 1;
+        success = 0;
         p.samprate.(dev_type)(dev_number) = dev_samprate;                
         p.circuit_files.(dev_type){dev_number} = 'PsychPortAudio';
 
         % note difference here. Tags are called PBsig, not separate tags for SigL and SigR
         p.partags.(dev_type){dev_number} = {'NumTotalChans' 'PBChans' 'PBSamps' 'PBSig' 'RecChans' 'RecSamps' 'RecSig' 'Blocking'};
         
-        
-        d = PsychPortAudio('GetDevices');
-        %i = strmatch('Aggregate Device',{d.DeviceName}); nchan = 4; % multiple sound cards aggregated in MacOS
-        i = strmatch(args.devicename,{d.DeviceName}); % 2 channels? of output on local audio?
-        if isempty(i)
-            i = strmatch('Built-in Output',{d.DeviceName}); % 2 channels? of output on local audio?
+        % new way - 3/20/2024
+        if isfield(args,'deviceindex') 
+                d = PsychPortAudio('GetDevices');
+                i = find([d.DeviceIndex]==args.deviceindex);
+                if ~isempty(i) && strcmp(args.devicename,d(i).DeviceName) && strcmp(args.API,d(i).HostAudioAPIName)
+   
+                    DevID = args.deviceindex;
+                    success = 1;
+                else
+                    warning(sprintf(['No matching PsychPortAudio device found for %s <%d> (%s)\n...' ...
+                        'Will attempt to match by device name only.'],...
+                        args.devicename,args.deviceindex,args.API));
+                end
         end
-        
-        DevID = d(i).DeviceIndex;
+
+        % old way
+        if ~success
+            % CS 8/2/2023 - use of bad PPA devices on Windows gives crazy audio
+            if ispc
+                % only allow WASAPI devices on Windows
+                d = PsychPortAudio('GetDevices',13);
+            else
+                % allow any on Mac. It will be CoreAudio, which works fine
+                d = PsychPortAudio('GetDevices');
+            end
+
+            %i = strmatch('Aggregate Device',{d.DeviceName}); nchan = 4; % multiple sound cards aggregated in MacOS
+            i = strmatch(args.devicename,{d.DeviceName}); % 2 channels? of output on local audio?
+            if isempty(i)
+                i = strmatch('Built-in Output',{d.DeviceName}); % 2 channels? of output on local audio?
+            elseif length(i) > 1
+                i = i(1); % use the first of two identically named devices?
+            end
+            DevID = d(i).DeviceIndex;
+            success = 1;
+        end
+      
        
         % open device with 4 channels at 48000
         fprintf('Opening %s device %d (%s), using %d of %d output channels and %d of %d input channels\n',d(i).HostAudioAPIName,DevID,d(i).DeviceName,...

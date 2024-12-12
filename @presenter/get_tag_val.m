@@ -74,7 +74,7 @@ end
 dev = p.devices.(dev_type)(dev_number);
 
 switch dev_type
-    case {'local_audio' }
+    case {'local_audio' 'local_audio2024'}
         % for local audio presenter object contains the tag data directly in
         % its userdata
         ud = get(dev,'UserData');
